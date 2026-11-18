@@ -65,6 +65,10 @@
     pop: t => tone(380, t, 0.08, 'sine', 0.3, 900),
     roll: t => tone(N(76 + Math.floor(Math.random() * 6)), t, 0.05, 'square', 0.15),
     tada: t => { [72, 76, 79].forEach(n => tone(N(n), t, 0.12, 'square', 0.15)); [72, 76, 79, 84].forEach(n => tone(N(n), t + 0.15, 0.5, 'square', 0.15)); },
+    whoosh: t => { noise(t, 0.25, 0.22, 900); tone(500, t, 0.22, 'sine', 0.08, 1400); },
+    splash: t => { noise(t, 0.35, 0.3, 300); tone(220, t, 0.18, 'sine', 0.25, 90); [79, 84].forEach((n, i) => tone(N(n), t + 0.12 + i * 0.07, 0.12, 'square', 0.12)); },
+    crack: t => { noise(t, 0.06, 0.35, 2500); noise(t + 0.05, 0.12, 0.25, 600); tone(160, t + 0.02, 0.08, 'square', 0.12, 80); },
+    clink: t => { tone(2600, t, 0.12, 'triangle', 0.25); tone(3900, t, 0.08, 'triangle', 0.12); },
     deny: t => { tone(180, t, 0.08, 'square', 0.15); tone(150, t + 0.09, 0.12, 'square', 0.15); },
   };
 

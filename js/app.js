@@ -17,7 +17,7 @@
   let pid = null;
   try { pid = sessionStorage.getItem('k21pid'); } catch (e) {}
   if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 10); try { sessionStorage.setItem('k21pid', pid); } catch (e) {} }
-  const me = { id: pid, name: store.get('name', ''), avatar: store.get('avatar', BJ.AVATAR_IDS[Math.floor(Math.random() * 8)]), drink: store.get('drink', 'tehtarik') };
+  const me = { mode: store.get('mode', 'bj'), id: pid, name: store.get('name', ''), avatar: store.get('avatar', BJ.AVATAR_IDS[Math.floor(Math.random() * 8)]), drink: store.get('drink', 'tehtarik') };
 
   // ---------- generated pixel assets ----------
   function gridURL(rows, pal, scale) {
@@ -43,7 +43,9 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v3';
+  const VERSION = 'v4';
+  const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
+  const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
 
   // ---------- game session ----------
@@ -70,6 +72,11 @@
       b.onclick = () => { me.drink = id; store.set('drink', id); $$('.pick', dg).forEach(x => x.classList.toggle('sel', x === b)); AU.unlock(); AU.play('chip'); };
       dg.appendChild(b);
     }
+    const mg = $('#modeGrid');
+    $$('.mode', mg).forEach(b => {
+      b.classList.toggle('sel', b.dataset.mode === me.mode);
+      b.onclick = () => { me.mode = b.dataset.mode; store.set('mode', me.mode); $$('.mode', mg).forEach(x => x.classList.toggle('sel', x === b)); AU.unlock(); AU.play('pop'); };
+    });
     const nameIn = $('#nameIn');
     nameIn.value = me.name;
     nameIn.oninput = () => { me.name = BJ.clean(nameIn.value); store.set('name', me.name); };
@@ -159,7 +166,8 @@
 
   function startHost() {
     newSession('host');
-    const table = new BJ.Table({
+    const Engine = me.mode === 'pong' ? PONG.Table : BJ.Table;
+    const table = new Engine({
       hostId: me.id,
       onChange: flush,
       onFx: f => { G.fxq.push(f); flush(); },
@@ -168,7 +176,7 @@
     table.addPlayer({ id: me.id, name: me.name, avatar: me.avatar, drink: me.drink });
     if (OFFLINE) {
       G.code = 'TEST'; table.s.code = 'TEST';
-      const nb = Math.min(5, +params.get('bots') || 0);
+      const nb = Math.min(me.mode === 'pong' ? 1 : 5, +params.get('bots') || 0);
       for (let i = 0; i < nb; i++) table.addBot();
       if (params.has('autostart')) setTimeout(() => table.start(), 400);
       table.changed();
@@ -194,7 +202,7 @@
       onJoined: () => {},
       onIntent: (p, m) => table.handle(p, m),
       onStatus: st => setStatus(st === 'reconnecting' ? 'Connection lost... reconnecting' : ''),
-      onRelays: r => { if (G) { G.relays = r; G.ctlKey = ''; if (G.state) renderControls(G.state, G.state.players.find(p => p.id === me.id)); } },
+      onRelays: r => { if (G) { G.relays = r; G.ctlKey = ''; if (G.state) { try { onState(G.state); } catch (e) { console.error(e); } } } },
       onLeave: p => table.disconnect(p),
     });
   }
@@ -277,6 +285,7 @@
     $('#timerBar').classList.remove('on');
     $('#game').classList.remove('myturn');
     $('#emoteBar').classList.add('hidden');
+    setPongMode(false);
     firstRender = true;
   }
 
@@ -299,6 +308,19 @@
     if (s.code) { G.code = s.code; $('#codeTxt').textContent = s.code; }
     const meP = s.players.find(p => p.id === me.id);
     G.isHost = s.hostId === me.id;
+    if (s.game === 'pong') {
+      $('#btnHost').classList.add('hidden');
+      setPongMode(true);
+      PV.render(s, me.id);
+      renderPongHud(s);
+      renderTimer(s, meP);
+      renderPongControls(s, meP);
+      renderTicker(s);
+      $('#game').classList.toggle('myturn', s.phase === 'aim' && !!s.turn && s.turn.pid === me.id);
+      if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showPongResult, 1500);
+      firstRender = false;
+      return;
+    }
     $('#btnHost').classList.toggle('hidden', !G.isHost);
     const seen = new Set();
     renderTauke(s, seen);
@@ -541,6 +563,13 @@
     const t = s.timer;
     if (!t) { G.timer = null; bar.classList.remove('on'); return; }
     if (!G.timer || G.timer.id !== t.id) G.timer = { id: t.id, end: performance.now() + t.left, total: t.total || 1 };
+    if (s.game === 'pong') {
+      const mine = !!(s.turn && s.turn.pid === me.id);
+      setText($('#timerLbl'), mine ? 'YOUR THROW!' : (s.turn ? nameOf(s.turn.pid).toUpperCase() + ' AIMING...' : ''));
+      G.timer.mine = mine && t.kind === 'aim';
+      bar.classList.add('on');
+      return;
+    }
     const tk = s.players.find(p => p.id === s.taukeId);
     const turnName = s.turn ? nameOf(s.turn.pid) : '';
     const lbl = { bet: 'PLACE YOUR BETS!', ins: 'INSURANCE?', turn: s.turn && s.turn.pid === me.id ? 'YOUR TURN!' : turnName.toUpperCase() + "'S TURN", open: tk && tk.id === me.id ? 'TAUKE, OPEN KAD!' : 'TAUKE OPENING...', settle: 'NEXT ROUND IN' }[t.kind] || '';
@@ -714,6 +743,7 @@
   // =============== FX ===============
   function targetFor(pid) {
     if (!G || !G.state) return null;
+    if (G.state.game === 'pong') return $$('#pongView .ph-card').find(c => c.dataset.pid === pid) || null;
     if (pid === G.state.taukeId) return $('.tk-who');
     return seatEls.get(pid) || null;
   }
@@ -721,6 +751,7 @@
 
   function onFx(f) {
     if (!G || !f) return;
+    if (G.state && G.state.game === 'pong') { pongFx(f); return; }
     switch (f.type) {
       case 'say': bubble(f.pid, f.text, f.mood); break;
       case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
@@ -883,14 +914,15 @@
     const p = s.players.find(x => x.id === f.id);
     if (!p) return;
     const cands = (f.candidates || []).map(id => s.players.find(x => x.id === id)).filter(Boolean);
-    if (!f.random || cands.length < 2) { showBanner('TAUKE: ' + p.name.toUpperCase(), 'info'); AU.play('tada'); return; }
+    const label = f.label || 'TAUKE';
+    if ((!f.random && f.type !== 'pick') || cands.length < 2) { showBanner(label + ': ' + p.name.toUpperCase(), 'info'); AU.play('tada'); return; }
     G.overlay = 'roulette';
     const ov = $('#overlay');
     ov.classList.remove('hidden');
     ov._kind = 'roulette';
     ov.classList.add('dark');
-    renderTauke(s, new Set(s.dealer.cards.map(c => c.id)));
-    ov.innerHTML = `<div class="roulette"><h2>SIAPA JADI TAUKE?</h2><div class="rl-row">${cands.map(c => `<div class="rl-item" data-id="${esc(c.id)}"><div class="av" style="background-image:url(${SPR.avatarSheet(c.avatar)})"></div><small>${esc(c.name)}</small></div>`).join('')}</div><div class="rl-result"></div></div>`;
+    if (s.dealer) renderTauke(s, new Set(s.dealer.cards.map(c => c.id)));
+    ov.innerHTML = `<div class="roulette"><h2>${esc(f.title || 'SIAPA JADI TAUKE?')}</h2><div class="rl-row">${cands.map(c => `<div class="rl-item" data-id="${esc(c.id)}"><div class="av" style="background-image:url(${SPR.avatarSheet(c.avatar)})"></div><small>${esc(c.name)}</small></div>`).join('')}</div><div class="rl-result"></div></div>`;
     const items = $$('.rl-item', ov);
     const n = items.length, ci = cands.findIndex(c => c.id === f.id);
     const steps = n * (n < 4 ? 4 : 2) + ci + 1;
@@ -903,11 +935,131 @@
       i++;
       if (i < steps) { setTimeout(go, 55 + 300 * Math.pow(i / steps, 2.2)); return; }
       const w = items[ci]; w.classList.remove('on'); w.classList.add('win');
-      $('.rl-result', ov).textContent = 'TAUKE: ' + p.name.toUpperCase() + '!';
+      $('.rl-result', ov).textContent = label + ': ' + p.name.toUpperCase() + '!';
       AU.play('tada'); confetti();
       setTimeout(() => { if (G && G.overlay === 'roulette') { closeOverlay(true); if (G.state) { G.ctlKey = ''; onState(G.state); } } }, 1500);
     };
     go();
+  }
+
+  // =============== TELUR PONG ===============
+  function setPongMode(on) {
+    $('#banner').classList.toggle('low', on);
+    $('#table').classList.toggle('hidden', on);
+    $('#pongView').classList.toggle('hidden', !on);
+    if (PV.visible !== on) { PV.visible = on; PV.show(on); }
+  }
+
+  function renderPongHud(s) {
+    const meP = s.players.find(p => p.id === me.id);
+    const opp = s.players.find(p => p.id !== me.id);
+    const fill = (card, p) => {
+      card.dataset.pid = p ? p.id : '';
+      card.style.visibility = p ? '' : 'hidden';
+      if (!p) return;
+      setBg($('.av', card), SPR.avatarSheet(p.avatar));
+      setText($('.nm', card), p.name + (p.id === me.id ? ' (you)' : '') + (p.wins ? ' · ' + p.wins + 'W' : '') + (p.connected ? '' : ' · offline'));
+      const cups = s.cups && s.cups[p.id];
+      setHTML($('.cupsl', card), cups ? cups.map(u => `<img src="${CUP_ICON}" alt=""${u ? '' : ' class="gone"'}>`).join('') : '');
+      card.classList.toggle('turn', !!(s.turn && s.turn.pid === p.id && s.phase !== 'over'));
+    };
+    fill($('#pongView .ph-card.opp'), opp);
+    fill($('#pongView .ph-card.mine'), meP);
+    const w = s.wind || 0, vw = PV.mySeat() === 0 ? w : -w;
+    const n = Math.round(Math.abs(vw) * 3);
+    setText($('#pongView .wval'), s.phase === 'lobby' ? '-' : n === 0 ? 'TENANG' : (vw < 0 ? '<'.repeat(n) + ' ' : '') + Math.abs(vw).toFixed(1) + (vw > 0 ? ' ' + '>'.repeat(n) : ''));
+    $('#pongView .ph-hint').classList.toggle('hidden', !(s.phase === 'aim' && s.turn && s.turn.pid === me.id));
+  }
+
+  function renderPongControls(s, meP) {
+    const box = $('#controls');
+    const host = s.hostId === me.id, n = s.players.length, ph = s.phase;
+    const mine = !!(s.turn && s.turn.pid === me.id);
+    const left = s.turn ? s.turn.left : 0;
+    const oppP = s.players.find(p => p.id !== me.id);
+    const myCups = s.cups && s.cups[me.id] ? s.cups[me.id].filter(Boolean).length : 6;
+    const key = ['pong', ph, mine, left, n, host, s.winner, (G.relays || []).join()].join('|');
+    let html = '';
+    if (ph === 'lobby') {
+      html = host
+        ? `<div class="ctl-info">Telur Pong · Players <b>${n}/2</b></div>
+           <div class="ctl-row">${n < 2 ? '<button class="btn fixed" data-act="addBot">+ BOT</button>' : ''}
+           <button class="btn red big" data-act="start" ${n < 2 ? 'disabled' : ''}>START!<small>${n < 2 ? 'Tunggu kawan...' : 'Mula main'}</small></button></div>
+           <div class="ctl-hint">${n < 2 ? 'Share code ' + esc(s.code || '') + ' to a friend · ' : ''}${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
+        : `<div class="ctl-info">Telur Pong · waiting for host to <b>START</b></div><div class="ctl-hint">Swipe up to throw eggs into kopi cups!</div>`;
+    } else if (ph === 'coin') {
+      html = '<div class="ctl-info">Lambung syiling... who throws first?</div>';
+    } else if (ph === 'over') {
+      const w = s.players.find(p => p.id === s.winner);
+      const st = id => s.stats && s.stats[id] ? s.stats[id].hits + '/' + s.stats[id].throws : '-';
+      html = `<div class="ctl-info"><b>${esc(w ? w.name : '?')}</b> MENANG! · You ${st(me.id)} · ${esc(oppP ? oppP.name : '')} ${st(oppP && oppP.id)}</div>` +
+        (host ? '<div class="ctl-row"><button class="btn red big" data-act="newGame">REMATCH!<small>Lawan lagi</small></button></div>' : '<div class="ctl-hint">Waiting host for rematch...</div>');
+    } else if (mine) {
+      const eggs = Array.from({ length: left }, () => `<img src="${EGG_ICON}" alt="" style="width:21px;height:24px;vertical-align:-5px">`).join(' ');
+      html = `<div class="ctl-info">GILIRAN KAU! ${eggs}</div><div class="ctl-hint">Swipe up on the table · longer = further · tilt to aim · watch the ANGIN</div>`;
+    } else {
+      html = `<div class="ctl-info"><b>${esc(oppP ? oppP.name : '...')}</b> is aiming at your cups...</div><div class="ctl-hint">Your cups left: ${myCups} · cheer with the chat button</div>`;
+    }
+    setCtl(box, key, html);
+  }
+
+  function floatAt(x, y, text, cls) {
+    const d = el('div', 'float ' + (cls || ''));
+    d.textContent = text; d.style.left = x + 'px'; d.style.top = y + 'px';
+    $('#fxLayer').appendChild(d);
+    const a = d.animate([
+      { transform: 'translate(-50%, 10px) scale(.6)', opacity: 0 },
+      { transform: 'translate(-50%, -12px) scale(1.4)', opacity: 1, offset: 0.15 },
+      { transform: 'translate(-50%, -24px) scale(1)', opacity: 1, offset: 0.7 },
+      { transform: 'translate(-50%, -54px) scale(1)', opacity: 0 },
+    ], { duration: 1600, easing: 'steps(14)', fill: 'forwards' });
+    a.onfinish = () => d.remove();
+  }
+
+  function pongFx(f) {
+    PV.fx(f);
+    switch (f.type) {
+      case 'say': bubble(f.pid, f.text, f.mood); break;
+      case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
+      case 'banner': showBanner(f.text, f.style); if (f.style === 'bj') AU.play('bj'); break;
+      case 'pick': taukePick(f); break;
+      case 'turn':
+        if (f.pid === me.id) { AU.play('turn'); showBanner('GILIRAN KAU!', 'info'); vibrate(80); }
+        break;
+      case 'land': {
+        if (f.outcome === 'hit' && f.pos) {
+          const p = PV.screenOf(f.pos[0], f.pos[1], PONG.C.cupH);
+          floatAt(p.x, p.y - 10, 'MASUK!', '');
+          if (f.cup && f.cup.pid === me.id) { shakeScreen(); vibrate([40, 30, 60]); }
+          else if (f.pid === me.id) vibrate(60);
+        } else if (f.outcome === 'splat' && f.pos) {
+          const p = PV.screenOf(f.pos[0], f.pos[1], 0);
+          floatAt(p.x, p.y - 6, 'PECAH!', 'neg');
+        } else if (f.outcome === 'floor') {
+          const r = $('#pongCanvas').getBoundingClientRect();
+          floatAt(r.left + r.width / 2, r.top + r.height * 0.5, 'JATUH LANTAI!', 'neg');
+        } else if (f.outcome === 'drop') {
+          const r = $('#pongCanvas').getBoundingClientRect();
+          floatAt(r.left + r.width / 2, r.top + r.height * 0.7, 'TERLEPAS!', 'neg');
+        }
+        break;
+      }
+      case 'gameover':
+        confetti(); AU.play(f.winner === me.id ? 'tada' : 'lose');
+        break;
+    }
+  }
+
+  function showPongResult() {
+    const s = G && G.state; if (!s || s.phase !== 'over') return;
+    const w = s.players.find(p => p.id === s.winner), l = s.players.find(p => p.id !== s.winner);
+    const st = p => p && s.stats[p.id] ? s.stats[p.id].hits + ' / ' + s.stats[p.id].throws + ' masuk' : '';
+    const pd = (p, i) => p ? `<div class="pd p${i + 1}"><div class="av" style="background-image:url(${SPR.avatarSheet(p.avatar)})"></div><div class="nm">${esc(p.name)}</div><div class="ch">${st(p)}</div><div class="blk">${i + 1}</div></div>` : '';
+    showOverlay(`<div class="modal"><h2>JUARA TELUR PONG · ${esc(w ? w.name : '')}!</h2>
+      <div class="podium">${pd(l, 1)}${pd(w, 0)}</div>
+      <p style="text-align:center">Score so far: ${s.players.map(p => esc(p.name) + ' ' + (p.wins || 0)).join(' · ')}</p>
+      <div class="row"><button class="btn" data-h="close">CLOSE</button>${G.isHost ? '<button class="btn red" data-h="newGame">REMATCH</button>' : ''}</div></div>`, 'podium');
+    confetti();
   }
 
   // =============== OVERLAYS ===============
@@ -930,6 +1082,19 @@
 
   function showHelp() {
     AU.unlock();
+    if ((G && G.state && G.state.game === 'pong') || (!G && me.mode === 'pong')) {
+      showOverlay(`<div class="modal"><h2>TELUR PONG · CARA MAIN</h2>
+        <ul>
+          <li>Throw eggs into the other player's <b>6 kopi cups</b>.</li>
+          <li><b>Swipe up</b> on the table (or drag up with the mouse). <b>Longer swipe = further</b>. Swipe <b>left/right</b> to aim.</li>
+          <li>The ceiling fan blows: check <b>ANGIN</b> (wind) before you throw. It changes every turn.</li>
+          <li><b>2 throws</b> per turn. Both go in? <b>Telur balik!</b> You throw 2 more.</li>
+          <li>Sink all 6 of their cups to win. Egg on the table = pecah telur, egg on the floor = jatuh lantai.</li>
+          <li>25 seconds per throw, or the egg slips out of your hand.</li>
+        </ul>
+        <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
+      return;
+    }
     showOverlay(`<div class="modal"><h2>HOW TO PLAY · CARA MAIN</h2>
       <ul>
         <li>Get closer to <b>21</b> than the <b>Tauke</b> (dealer) without going over.</li>
@@ -1029,10 +1194,18 @@
 
   // =============== boot ===============
   Scene.init($('#scene'));
+  PV.mount($('#pongCanvas'), { onThrow: (p, a) => send({ t: 'throw', p, a }) });
+  PV.onAim = p => {
+    const pw = $('#pongView .ph-power');
+    if (p == null) { pw.classList.add('hidden'); return; }
+    pw.classList.remove('hidden');
+    $('i', pw).style.height = Math.min(100, p / 1.2 * 100).toFixed(0) + '%';
+    $('i', pw).style.background = p < 0.55 ? '#7cff9a' : p < 0.95 ? '#f6c744' : '#ff6b5b';
+  };
   initHome();
   $('.chit-foot span').textContent = 'Play chips only · no real money · ' + VERSION;
   initGameUI();
-  if (OFFLINE && params.has('autohost')) { me.name = me.name || 'Tester'; startHost(); }
+  if (OFFLINE && params.has('autohost')) { me.name = me.name || 'Tester'; if (params.get('mode')) me.mode = params.get('mode'); startHost(); }
   else {
     // refreshed the page mid-game? hop straight back to the same table
     let back = null; try { back = sessionStorage.getItem('k21room'); } catch (e) {}

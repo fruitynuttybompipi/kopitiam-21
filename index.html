@@ -8,7 +8,7 @@
 <meta name="description" content="Pixel blackjack with friends at the kopitiam. Huat ah!">
 <link rel="preload" href="fonts/PressStart2P.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/VT323.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/style.css?v=202611181503">
+<link rel="stylesheet" href="css/style.css?v=202611181541">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect x='3' y='5' width='8' height='8' fill='%23fbfbf4'/><rect x='3' y='5' width='8' height='2' fill='%233a2010'/><rect x='11' y='7' width='2' height='4' fill='%23fbfbf4'/><rect x='2' y='13' width='11' height='2' fill='%233fae6a'/></svg>">
 </head>
 <body>
@@ -20,10 +20,16 @@
     <div class="chain l"></div><div class="chain r"></div>
     <h1 class="sign"><span>KOPITIAM</span> <b>21</b></h1>
   </div>
-  <p class="tagline">Blackjack · Huat Ah!</p>
+  <p class="tagline">Blackjack · Telur Pong</p>
 
   <div class="chit">
     <div class="chit-head"><span>ORDER CHIT</span><span>No. 21</span></div>
+
+    <label>PILIH GAME</label>
+    <div id="modeGrid" class="mode-grid">
+      <button class="pick mode" data-mode="bj" type="button"><b>BLACKJACK</b><small>2–6 players</small></button>
+      <button class="pick mode" data-mode="pong" type="button"><b>TELUR PONG</b><small>2 players · eggs</small></button>
+    </div>
 
     <label for="nameIn">NAMA / Your name</label>
     <input id="nameIn" maxlength="14" autocomplete="off" placeholder="Ah Beng">
@@ -80,6 +86,14 @@
       <div id="tableMsg"></div>
       <div id="seats"></div>
     </div>
+    <div id="pongView" class="hidden">
+      <canvas id="pongCanvas"></canvas>
+      <div class="ph-card opp"><div class="bubble"></div><span class="av"></span><div class="ph-info"><b class="nm"></b><div class="cupsl"></div></div></div>
+      <div class="ph-wind"><small>ANGIN</small><b class="wval"></b></div>
+      <div class="ph-card mine"><div class="bubble"></div><span class="av"></span><div class="ph-info"><b class="nm"></b><div class="cupsl"></div></div></div>
+      <div class="ph-hint hidden">SWIPE UP!<i></i></div>
+      <div class="ph-power hidden"><i></i></div>
+    </div>
   </main>
 
   <div id="ticker"><span></span></div>
@@ -95,13 +109,15 @@
 <div id="status" class="hidden"></div>
 <div id="toast"></div>
 
-<script src="js/vendor/mqtt.min.js?v=202611181503"></script>
-<script src="js/sprites.js?v=202611181503"></script>
-<script src="js/engine.js?v=202611181503"></script>
-<script src="js/audio.js?v=202611181503"></script>
-<script src="js/scene.js?v=202611181503"></script>
-<script src="js/config.js?v=202611181503"></script>
-<script src="js/net.js?v=202611181503"></script>
-<script src="js/app.js?v=202611181503"></script>
+<script src="js/vendor/mqtt.min.js?v=202611181541"></script>
+<script src="js/sprites.js?v=202611181541"></script>
+<script src="js/pong.js?v=202611181541"></script>
+<script src="js/engine.js?v=202611181541"></script>
+<script src="js/audio.js?v=202611181541"></script>
+<script src="js/scene.js?v=202611181541"></script>
+<script src="js/config.js?v=202611181541"></script>
+<script src="js/pongview.js?v=202611181541"></script>
+<script src="js/net.js?v=202611181541"></script>
+<script src="js/app.js?v=202611181541"></script>
 </body>
 </html>
