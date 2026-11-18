@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v4';
+  const VERSION = 'v5';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -1199,8 +1199,8 @@
     const pw = $('#pongView .ph-power');
     if (p == null) { pw.classList.add('hidden'); return; }
     pw.classList.remove('hidden');
-    $('i', pw).style.height = Math.min(100, p / 1.2 * 100).toFixed(0) + '%';
-    $('i', pw).style.background = p < 0.55 ? '#7cff9a' : p < 0.95 ? '#f6c744' : '#ff6b5b';
+    $('i', pw).style.height = Math.min(100, p * 100).toFixed(0) + '%';
+    $('i', pw).style.background = p < 0.5 ? '#7cff9a' : p < 0.85 ? '#f6c744' : '#ff6b5b';
   };
   initHome();
   $('.chit-foot span').textContent = 'Play chips only · no real money · ' + VERSION;

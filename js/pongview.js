@@ -6,6 +6,7 @@
   const PV = {};
   let cv, cx, S = 2, W = 0, H = 0, F = 0, H0 = 0, CX = 0;
   const CAM_Y = -2.0, CAM_H = 1.6;
+  const SWIPE = 0.5; // a swipe this fraction of the table's height = full power
   let st = null, meId = null, mySeat = 0, onThrow = null;
   let tableImg = null, tableKey = '';
   let flight = null;          // {path, dt, t0, rims, rimDone}
@@ -252,10 +253,16 @@
       if (drag) {
         const dy = (drag.y0 - drag.y), dx = drag.x - drag.x0;
         if (dy > 4) {
-          const p = Math.min(1.2, dy / (0.42 * cv.getBoundingClientRect().height));
+          const p = Math.min(1, dy / (SWIPE * cv.getBoundingClientRect().height));
           const a = Math.max(-1, Math.min(1, (dx / dy) / 0.75));
-          const len = 10 + p * H * 0.35, ang = a * 0.6;
-          const col = p < 0.55 ? '#7cff9a' : p < 0.95 ? '#f6c744' : '#ff6b5b';
+          const len = 10 + p * H * 0.3, ang = a * 0.6;
+          const col = p < 0.5 ? '#7cff9a' : p < 0.85 ? '#f6c744' : '#ff6b5b';
+          // distance guide: dashed line across the table where the egg would come down (no wind)
+          const r = PONG.simulate(p, 0, 0, 0, [], { crossOnly: true });
+          if (r && r.y > 0.05 && r.y < C.L + 0.3) {
+            const gp = proj(0, r.y, 0), hw = (C.W / 2) * gp.k;
+            for (let gx = Math.round(CX - hw); gx < CX + hw; gx += 4) { cx.fillStyle = 'rgba(246,199,68,.9)'; cx.fillRect(gx, Math.round(gp.y), 2, 1); }
+          }
           for (let s = 0; s < len; s += 2) {
             const x = hp.x + Math.sin(ang) * s, y = hp.y - Math.cos(ang) * s - 4;
             cx.fillStyle = s % 6 < 2 ? '#2a1a12' : col; cx.fillRect(Math.round(x) - 1, Math.round(y), 2, 2);
@@ -298,7 +305,7 @@
     const dy = d.y0 - e.clientY, dx = e.clientX - d.x0;
     if (dy < 24) return;
     const h = cv.getBoundingClientRect().height;
-    const p = Math.min(1.2, dy / (0.42 * h));
+    const p = Math.min(1, dy / (SWIPE * h));
     const a = Math.max(-1, Math.min(1, (dx / dy) / 0.75));
     thrownAt = performance.now();
     AU.play('whoosh');

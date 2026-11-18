@@ -27,7 +27,7 @@
   const fromFrame = toFrame; // same mirror both ways
 
   function launch(p, a) {
-    const R = 0.8 + 1.5 * p;                      // swipe power -> intended distance
+    const R = 1.0 + 1.1 * p;                      // swipe power (0..1) -> intended distance (m)
     const A = C.angle, c = Math.cos(A);
     const k = C.h0 - C.cupH + Math.tan(A) * R;
     const v = Math.sqrt(C.g * R * R / (2 * c * c * Math.max(0.05, k)));
@@ -37,7 +37,7 @@
   }
 
   /* Simulate a throw.
-     p: power 0..1.2, a: aim -1..1, wind: -1..1 (world x), seat: thrower seat,
+     p: power 0..1, a: aim -1..1, wind: -1..1 (world x), seat: thrower seat,
      targets: [{i, x, y}] standing cups of the opponent (world coords).
      Returns { outcome: 'hit'|'splat'|'floor', cup, pos:[x,y], path:[[x,y,z]...], rims:[pathIndex] } in world coords. */
   function simulate(p, a, wind, seat, targets, opts) {
@@ -214,7 +214,7 @@
         res = { outcome: 'drop', pos: null, path: [], rims: [], dt: C.sample };
         this.say(pid, 'drop', 'sad');
       } else {
-        const p = Math.max(0, Math.min(1.2, +inp.p || 0)), a = Math.max(-1, Math.min(1, +inp.a || 0));
+        const p = Math.max(0, Math.min(1, +inp.p || 0)), a = Math.max(-1, Math.min(1, +inp.a || 0));
         res = simulate(p, a, S.wind, this.seatOf(pid), this.targets(pid));
       }
       S.phase = 'flying';
@@ -284,7 +284,7 @@
       const tg = this.targets(pid); if (!tg.length) return;
       const target = this.pick(tg), seat = this.seatOf(pid);
       let best = null, bd = 9;
-      for (let a = -1; a <= 1.0001; a += 0.05) for (let p = 0; p <= 1.2; p += 0.01) {
+      for (let a = -1; a <= 1.0001; a += 0.05) for (let p = 0; p <= 1.0001; p += 0.008) {
         const r = simulate(p, a, S.wind, seat, [], { crossOnly: true });
         if (!r || r.x == null) continue;
         const [wx, wy] = fromFrame(seat, r.x, r.y);
