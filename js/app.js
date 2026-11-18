@@ -43,6 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
+  const VERSION = 'v3';
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
 
   // ---------- game session ----------
@@ -193,6 +194,7 @@
       onJoined: () => {},
       onIntent: (p, m) => table.handle(p, m),
       onStatus: st => setStatus(st === 'reconnecting' ? 'Connection lost... reconnecting' : ''),
+      onRelays: r => { if (G) { G.relays = r; G.ctlKey = ''; if (G.state) renderControls(G.state, G.state.players.find(p => p.id === me.id)); } },
       onLeave: p => table.disconnect(p),
     });
   }
@@ -228,8 +230,9 @@
         else if (m.t === 'kicked') { leaveGame(true); alertBox('Kena kick!', 'The host removed you from the table.'); }
       },
       onStatus: st => setStatus(st === 'reconnecting' ? 'Connection lost... reconnecting' : ''),
-      onError: e => {
-        const msg = e === 'notfound' ? 'Meja <b>' + esc(code) + '</b> not found. Check the code, or ask the host to open the table again.'
+      onError: (e, reached) => {
+        const via = reached && reached.length ? '<br><small>Checked relays: ' + esc(reached.join(', ')) + ' · game ' + VERSION + '</small>' : '';
+        const msg = e === 'notfound' ? 'Meja <b>' + esc(code) + '</b> not found. Check the code, and make sure the host has the table open on game <b>' + VERSION + '</b> (shown at the bottom of the first screen).' + via
           : e === 'lost' ? 'Host tutup kedai — the table closed or the connection was lost.'
             : e === 'timeout' ? 'The table is open but the host is not answering. Ask the host to keep the game screen open, then try again.'
               : e === 'network' ? 'Cannot reach the game server. Check your internet connection and try again.'
@@ -608,7 +611,8 @@
         ? `<div class="ctl-info">Players <b>${n}/${BJ.MAX_PLAYERS}</b> · Tauke: <b>${esc(nt)}</b></div>
            <div class="ctl-row"><button class="btn fixed" data-act="addBot" ${n >= BJ.MAX_PLAYERS ? 'disabled' : ''}>+ BOT</button>
            <button class="btn blue fixed" data-act="hostMenu">TAUKE</button>
-           <button class="btn red big" data-act="start" ${n < 2 ? 'disabled' : ''}>START!<small>Mula main</small></button></div>`
+           <button class="btn red big" data-act="start" ${n < 2 ? 'disabled' : ''}>START!<small>Mula main</small></button></div>
+           <div class="ctl-hint">${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
         : `<div class="ctl-info">Duduk dulu... waiting for host to <b>START</b></div><div class="ctl-hint">Everyone starts with 1000 chips · No credit lah!</div>`;
     } else if (ph === 'betting') {
       if (isT) html = `<div class="ctl-info">You are <b>TAUKE</b>! Bank <b>${meP.chips}</b></div><div class="ctl-hint">${lockedN}/${bettors} players bet</div>
@@ -1026,6 +1030,7 @@
   // =============== boot ===============
   Scene.init($('#scene'));
   initHome();
+  $('.chit-foot span').textContent = 'Play chips only · no real money · ' + VERSION;
   initGameUI();
   if (OFFLINE && params.has('autohost')) { me.name = me.name || 'Tester'; startHost(); }
   else {
