@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v6';
+  const VERSION = 'v7';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -808,7 +808,7 @@
     b.textContent = text;
     b.className = 'bubble ' + (md || '');
     b.style.marginLeft = '0px';
-    if (t.classList.contains('tk-who')) { void b.offsetWidth; b.classList.add('show'); if (md === 'happy' || md === 'sad') mood($('.av', t), md); return; }
+    if (t.classList.contains('tk-who') || t.classList.contains('ph-card')) { void b.offsetWidth; b.classList.add('show'); if (md === 'happy' || md === 'sad') mood($('.av', t), md); return; }
     const pr = b.parentElement.getBoundingClientRect(), half = b.offsetWidth / 2, cx = pr.left + pr.width / 2;
     const shift = Math.max(6 - (cx - half), Math.min(0, innerWidth - 6 - (cx + half)));
     b.style.marginLeft = shift + 'px';

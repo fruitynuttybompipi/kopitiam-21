@@ -52,11 +52,19 @@
     };
     const refreshRelays = () => { api.relays = links.filter(l => l.ready && l.c.connected).map(l => short(l.url)); if (h.onRelays) h.onRelays(api.relays); };
 
-    function onMsg(topic, payload) {
+    const via = new Map(); // pid -> relay link the player talks through
+    function onMsg(link, topic, payload) {
       if (topic !== t.toHost || closed) return;
       const w = dec(payload); if (!w || !w.pid || !w.m) return;
       const pid = String(w.pid).slice(0, 24), m = w.m;
-      if (m.t === 'bye') { if (seen.delete(pid)) h.onLeave(pid); return; }
+      if (m.t === 'bye') {
+        // a "bye" from some other relay (e.g. a spare connection closing) is not a real goodbye
+        if (via.has(pid) && via.get(pid) !== link) return;
+        via.delete(pid);
+        if (seen.delete(pid)) h.onLeave(pid);
+        return;
+      }
+      via.set(pid, link);
       if (m.t === 'hello') {
         const r = h.onHello(Object.assign({}, m, { pid }));
         if (!r || !r.ok) { api.send(pid, { t: 'reject', reason: (r && r.reason) || 'Cannot join' }); return; }
@@ -75,7 +83,7 @@
     function startLink(url) {
       const l = { url, ready: false };
       l.c = connect(url, { will: { topic: t.host, payload: '', retain: true, qos: 1 } });
-      l.c.on('message', onMsg);
+      l.c.on('message', (topic, payload) => onMsg(l, topic, payload));
       l.c.on('connect', () => {
         if (closed) return;
         if (h.onStatus) h.onStatus('');
@@ -160,7 +168,8 @@
             if (!cl) {
               cl = c; api.relay = short(url);
               clearTimeout(nfTO);
-              tries.forEach(o => { if (o !== c) { try { o.end(true); } catch (e) {} } });
+              // close spare relays with a proper DISCONNECT so their "bye" will is NOT sent
+              tries.forEach(o => { if (o !== c) { try { o.end(false); } catch (e) {} } });
               h.onOpen();
               let n = 0;
               const again = setInterval(() => { if (everOpen || closed || ++n > 5) clearInterval(again); else h.onOpen(); }, 4000);
