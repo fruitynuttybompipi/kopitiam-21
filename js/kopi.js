@@ -106,7 +106,7 @@
     newCup() {
       const S = this.s;
       S.cupNo++; S.loser = null;
-      S.level = Math.round((0.5 + this.rng() * 0.2) * 1000) / 1000; // uncle already filled it part way
+      S.level = 0; // every cup starts empty
       this.T = 1.0 + this.rng() * 0.12; // between the brim and a fat bulge
     }
     beginTurn(pid) {
@@ -233,7 +233,8 @@
       if (S.phase !== 'pour' || !tr || tr.pid !== pid) return;
       const room = 1.0 - S.level;
       let amt;
-      if (room > 0.3) amt = 0.03 + this.rng() * 0.15;
+      if (room > 0.55) amt = 0.08 + this.rng() * 0.2;
+      else if (room > 0.3) amt = 0.03 + this.rng() * 0.15;
       else if (room > 0.12) amt = 0.01 + this.rng() * 0.05;
       else amt = this.rng() * 0.015;
       this.say(pid, amt > 0.12 ? 'pourBig' : 'pourSmall');

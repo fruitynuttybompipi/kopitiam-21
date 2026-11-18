@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v10';
+  const VERSION = 'v11';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -1208,7 +1208,6 @@
           <li>Everyone takes turns pouring kopi into <b>the same cup</b>.</li>
           <li><b>Press and hold</b> TUANG (or the cup) to pour. The longer you hold, the faster the kettle pours. Let go to stop — a few drops still fall after.</li>
           <li>Any pour counts — <b>even one drip</b>. A tap is enough to pass your turn.</li>
-          <li>Every new cup starts part-full. Uncle already poured some!</li>
           <li>The kopi can bulge a little above the rim, but the real spill point is <b>secret</b> and different every cup.</li>
           <li>Whoever makes it <b>tumpah</b> is out and <b>belanja kopi</b>! A new cup starts. Last player standing wins.</li>
           <li>10 seconds per turn, or the kettle drips a little for you.</li>

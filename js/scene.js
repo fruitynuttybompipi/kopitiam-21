@@ -50,6 +50,16 @@
     L.ceil = Math.max(6, Math.round(H * 0.06));
     L.dado = Math.round(H * 0.6);
     L.floor = Math.round(H * 0.84);
+    // windows on the back wall (kept clear of the menu board and the clock/calendar)
+    L.windows = [];
+    const ww = 40, wh = Math.min(34, Math.round((L.dado - L.ceil) * 0.4)), wy = L.ceil + 22;
+    const leftMin = W > 150 ? 62 : 6, rightMax = W > 120 ? W - 30 : W - 4;
+    for (const fx of W >= 220 ? [0.27, 0.62] : [0.3]) {
+      let x = Math.round(W * fx - ww / 2);
+      x = Math.max(leftMin, Math.min(rightMax - ww, x));
+      if (x + ww <= rightMax && !L.windows.some(o => Math.abs(o.x - x) < ww + 6)) L.windows.push({ x, y: wy, w: ww, h: wh, seed: x * 7 + 3 });
+    }
+    L.tubes = (W >= 220 ? [0.36, 0.64] : [0.5]).map(f => Math.round(W * f));
     bg = drawStatic();
   }
 
@@ -202,14 +212,17 @@
           cx.fillRect(Math.round(ax + Math.sin(t * 3 + i) * 2), Math.round(ay - 1 - k * 14), 1, 2);
         }
       } else if (c.fx === 'fire') {
-        // wok over flames
-        cx.fillStyle = '#2a2a2a'; cx.fillRect(ax - 6, ay - 3, 12, 2); cx.fillRect(ax - 4, ay - 1, 8, 1); cx.fillRect(ax + 6, ay - 4, 4, 1);
-        for (let i = 0; i < 4; i++) {
-          const fh = 2 + Math.floor(((Math.sin(t * 18 + i * 2) + 1) / 2) * 4);
+        // wok sitting low on the stove, flames licking up around its base
+        const wy = ay + 4; // sits down inside the top of the case
+        cx.fillStyle = '#3a3a3a'; cx.fillRect(ax - 6, wy + 2, 12, 1);
+        for (let i = 0; i < 5; i++) {
+          const fh = 1 + Math.floor(((Math.sin(t * 18 + i * 2) + 1) / 2) * 3);
           cx.fillStyle = i % 2 ? '#f6c744' : '#e8641e';
-          cx.fillRect(ax - 4 + i * 2, ay - 3 - fh, 2, fh);
+          cx.fillRect(ax - 5 + i * 2, wy + 2 - fh, 2, fh);
         }
-        if (Math.sin(t * 5) > 0.3) { cx.fillStyle = 'rgba(80,80,80,.5)'; cx.fillRect(Math.round(ax + Math.sin(t * 2) * 3), ay - 12 - Math.floor(t * 8 % 6), 2, 2); }
+        cx.fillStyle = '#2a2a2a'; cx.fillRect(ax - 6, wy - 2, 12, 2); cx.fillRect(ax - 4, wy, 8, 1); cx.fillRect(ax + 6, wy - 3, 4, 1);
+        cx.fillStyle = '#8a5028'; cx.fillRect(ax - 4, wy - 3, 7, 1);
+        if (Math.sin(t * 5) > 0.2) { cx.fillStyle = 'rgba(90,90,90,.45)'; cx.fillRect(Math.round(ax + Math.sin(t * 2) * 3), wy - 6 - Math.floor(t * 8 % 6), 2, 2); }
       } else if (c.fx === 'flip') {
         // roti being flipped
         const k = (t * 1.3) % 1, up = Math.sin(k * Math.PI) * 10;
@@ -295,6 +308,84 @@
     if (c.x > W + 12 || c.x < -12) { c.active = false; c.next = 15 + Math.random() * 25; }
   }
 
+  // ---------- time of day ----------
+  const HOUR = (() => { const q = new URLSearchParams(root.location.search).get('hour'); return q == null ? null : +q; })();
+  function period() {
+    const d = new Date();
+    const h = HOUR != null ? HOUR : d.getHours() + d.getMinutes() / 60;
+    if (h >= 6 && h < 11) return 'morning';
+    if (h >= 11 && h < 17) return 'afternoon';
+    if (h >= 17 && h < 19.5) return 'evening';
+    return 'night';
+  }
+  const SKY = {
+    morning: ['#9fd4f0', '#f6e2b8'], afternoon: ['#4aa3e0', '#a8dcf4'],
+    evening: ['#3a3a7a', '#f08a4a'], night: ['#0c1030', '#1e2850'],
+  };
+  const DARK = { morning: 0, afternoon: 0, evening: 0.22, night: 0.42 };
+  const mix = (a, b, k) => { const p = parseInt(a.slice(1), 16), q = parseInt(b.slice(1), 16); const c = [16, 8, 0].map(s => Math.round(((p >> s) & 255) * (1 - k) + ((q >> s) & 255) * k)); return `rgb(${c[0]},${c[1]},${c[2]})`; };
+
+  function drawWindow(win, t, per) {
+    const { x, y, w, h, seed } = win;
+    // frame
+    cx.fillStyle = '#2a1a12'; cx.fillRect(x - 3, y - 3, w + 6, h + 6);
+    cx.fillStyle = '#6b4226'; cx.fillRect(x - 2, y - 2, w + 4, h + 4);
+    cx.save(); cx.beginPath(); cx.rect(x, y, w, h); cx.clip();
+    const [top, bot] = SKY[per];
+    for (let i = 0; i < h; i++) { cx.fillStyle = mix(top, bot, i / h); cx.fillRect(x, y + i, w, 1); }
+    let r = seed;
+    const rnd = () => { r = (r * 16807) % 2147483647; return r / 2147483647; };
+    // sun / moon
+    if (per === 'night') {
+      for (let i = 0; i < 14; i++) { const sx = x + Math.floor(rnd() * w), sy = y + Math.floor(rnd() * h * 0.6); if (Math.sin(t * 2 + i * 1.7) > -0.3) { cx.fillStyle = '#fff8d0'; cx.fillRect(sx, sy, 1, 1); } }
+      cx.fillStyle = '#f4f0d8'; cx.fillRect(x + w - 12, y + 4, 5, 5); cx.fillStyle = SKY.night[0]; cx.fillRect(x + w - 10, y + 3, 4, 4);
+    } else {
+      const sun = per === 'morning' ? [x + 8, y + h * 0.55, '#ffe08a'] : per === 'afternoon' ? [x + w * 0.6, y + 5, '#fff6c0'] : [x + w * 0.45, y + h * 0.62, '#ff9a4a'];
+      const sr = per === 'evening' ? 5 : 3;
+      for (let dy = -sr; dy <= sr; dy++) { const hw = Math.round(Math.sqrt(sr * sr - dy * dy)); cx.fillStyle = sun[2]; cx.fillRect(Math.round(sun[0] - hw), Math.round(sun[1] + dy), hw * 2 + 1, 1); }
+      // drifting clouds
+      cx.fillStyle = per === 'evening' ? 'rgba(255,190,160,.8)' : 'rgba(255,255,255,.9)';
+      for (let i = 0; i < 2; i++) { const cxp = x + ((rnd() * w + t * (1.5 + i)) % (w + 16)) - 8, cyp = y + 4 + i * 6 + Math.floor(rnd() * 4); cx.fillRect(Math.round(cxp), cyp, 8, 2); cx.fillRect(Math.round(cxp) + 2, cyp - 1, 4, 1); }
+    }
+    // shophouse skyline
+    const bcol = { morning: '#b9a88e', afternoon: '#c9b896', evening: '#4a3a4a', night: '#141828' }[per];
+    let bx = x;
+    while (bx < x + w) {
+      const bw = 6 + Math.floor(rnd() * 7), bh = 8 + Math.floor(rnd() * (h * 0.45));
+      cx.fillStyle = bcol; cx.fillRect(bx, y + h - bh, bw, bh);
+      cx.fillStyle = per === 'night' || per === 'evening' ? '#f6c744' : 'rgba(80,60,40,.45)';
+      for (let wy2 = y + h - bh + 2; wy2 < y + h - 2; wy2 += 4) for (let wx2 = bx + 1; wx2 < bx + bw - 1; wx2 += 3) if (rnd() < (per === 'night' ? 0.45 : per === 'evening' ? 0.3 : 0.6)) cx.fillRect(wx2, wy2, 1, 2);
+      bx += bw + 1;
+    }
+    cx.restore();
+    // window bars + sill
+    cx.fillStyle = '#6b4226'; cx.fillRect(x + Math.floor(w / 2) - 1, y, 2, h); cx.fillRect(x, y + Math.floor(h / 2) - 1, w, 2);
+    cx.fillStyle = 'rgba(42,26,18,.55)'; for (let bx2 = x + 5; bx2 < x + w; bx2 += 6) cx.fillRect(bx2, y, 1, h);
+    cx.fillStyle = '#8a5a34'; cx.fillRect(x - 4, y + h + 2, w + 8, 2);
+    if (per !== 'night') { cx.fillStyle = 'rgba(255,255,255,.25)'; cx.fillRect(x + 2, y + 2, 1, h - 4); }
+  }
+
+  function drawTubes(t, on) {
+    for (const tx of L.tubes || []) {
+      const y = L.ceil + 2, len = 26;
+      cx.fillStyle = '#4a4a4a'; cx.fillRect(tx - len / 2 - 1, y - 2, 2, 3); cx.fillRect(tx + len / 2 - 1, y - 2, 2, 3);
+      const flick = on && tx === (L.tubes[0]) && Math.sin(t * 7) > 0.97;
+      cx.fillStyle = on && !flick ? '#f4fbff' : '#b8bec6'; cx.fillRect(tx - len / 2, y, len, 2);
+      cx.fillStyle = '#8a9098'; cx.fillRect(tx - len / 2, y + 2, len, 1);
+    }
+  }
+  function drawLight(on) {
+    if (!on) return;
+    cx.save();
+    cx.globalCompositeOperation = 'lighter';
+    for (const tx of L.tubes || []) {
+      const g = cx.createRadialGradient(tx, L.ceil + 3, 2, tx, L.ceil + 30, Math.max(60, W * 0.35));
+      g.addColorStop(0, 'rgba(255,248,220,.35)'); g.addColorStop(1, 'rgba(255,248,220,0)');
+      cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+    }
+    cx.restore();
+  }
+
   function frame(now) {
     requestAnimationFrame(frame);
     if (document.hidden) return;
@@ -303,6 +394,8 @@
     last = now;
     const t = (now - t0) / 1000;
     cx.drawImage(bg, 0, 0);
+    const per = period(), lights = per === 'evening' || per === 'night';
+    for (const win of L.windows || []) drawWindow(win, t, per);
     drawFan(Math.round(W * 0.18), t, W < 200 ? 12 : 18);
     drawFan(Math.round(W * 0.82), t + 0.4, W < 200 ? 12 : 18);
     drawClock(t);
@@ -310,6 +403,11 @@
     drawStallLife(t);
     drawTehMan(t);
     drawCat(dt);
+    // evening / night: the shop gets darker and the light tubes come on
+    if (DARK[per]) { cx.fillStyle = `rgba(20,15,45,${DARK[per]})`; cx.fillRect(0, 0, W, H); }
+    for (const win of L.windows || []) if (DARK[per]) drawWindow(win, t, per); // windows stay true to the sky outside
+    drawLight(lights);
+    drawTubes(t, lights);
   }
 
   Scene.init = function (canvas) {
