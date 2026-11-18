@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v12';
+  const VERSION = 'v13';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -182,7 +182,7 @@
 
   function startHost() {
     newSession('host');
-    const Engine = me.mode === 'pong' ? PONG.Table : me.mode === 'kopi' ? KOPI.Table : BJ.Table;
+    const Engine = me.mode === 'pong' ? PONG.Table : me.mode === 'kopi' ? KOPI.Table : me.mode === 'order' ? ORDER.Table : BJ.Table;
     const table = new Engine({
       hostId: me.id,
       onChange: flush,
@@ -302,6 +302,7 @@
     $('#game').classList.remove('myturn');
     $('#emoteBar').classList.add('hidden');
     setPongMode(false);
+    $('#game').classList.remove('hide-emote');
     firstRender = true;
   }
 
@@ -324,6 +325,19 @@
     if (s.code) { G.code = s.code; $('#codeTxt').textContent = s.code; }
     const meP = s.players.find(p => p.id === me.id);
     G.isHost = s.hostId === me.id;
+    if (s.game === 'order') {
+      $('#btnHost').classList.add('hidden');
+      setView('order');
+      OV.render(s, me.id);
+      renderTimer(s, meP);
+      renderOrderControls(s, meP);
+      renderTicker(s);
+      $('#game').classList.toggle('myturn', s.phase === 'answer' && s.cur === me.id);
+      $('#game').classList.toggle('hide-emote', s.phase === 'answer' && s.cur === me.id);
+      if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showOrderResult, 1600);
+      firstRender = false;
+      return;
+    }
     if (s.game === 'kopi') {
       $('#btnHost').classList.add('hidden');
       setView('kopi');
@@ -592,6 +606,13 @@
     const t = s.timer;
     if (!t) { G.timer = null; bar.classList.remove('on'); return; }
     if (!G.timer || G.timer.id !== t.id) G.timer = { id: t.id, end: performance.now() + t.left, total: t.total || 1 };
+    if (s.game === 'order') {
+      const mine = s.cur === me.id, cn = s.cur ? nameOf(s.cur).toUpperCase() : '';
+      setText($('#timerLbl'), t.kind === 'show' ? (mine ? 'DENGAR! LISTEN UP' : cn + ' LISTENING...') : t.kind === 'answer' ? (mine ? 'KEY IN THE ORDER!' : cn + ' KEYING IN...') : 'NEXT TABLE IN');
+      G.timer.mine = mine && t.kind === 'answer';
+      bar.classList.add('on');
+      return;
+    }
     if (s.game === 'kopi') {
       const mine = !!(s.turn && s.turn.pid === me.id);
       setText($('#timerLbl'), mine ? 'YOUR POUR!' : (s.turn ? nameOf(s.turn.pid).toUpperCase() + ' POURING...' : ''));
@@ -772,7 +793,8 @@
       case 'addBot': AU.play('pop'); send({ t: 'addBot' }); return;
       case 'hostMenu': showHostMenu(); return;
       case 'newGame': send({ t: 'newGame' }); closeOverlay(); return;
-      case 'results': showPodium(); return;
+      case 'results': if (G.state && G.state.game === 'order') showOrderResult(); else showPodium(); return;
+      case 'submitOrder': AU.play('chip'); send({ t: 'chit', items: OV.chitNow() }); send({ t: 'submit' }); return;
       case 'menu': confirmLeave(); return;
     }
   }
@@ -782,6 +804,7 @@
     if (!G || !G.state) return null;
     if (G.state.game === 'pong') return $$('#pongView .ph-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'kopi') return $$('#kopiView .kp-card').find(c => c.dataset.pid === pid) || null;
+    if (G.state.game === 'order') return $$('#orderView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (pid === G.state.taukeId) return $('.tk-who');
     return seatEls.get(pid) || null;
   }
@@ -791,6 +814,7 @@
     if (!G || !f) return;
     if (G.state && G.state.game === 'pong') { pongFx(f); return; }
     if (G.state && G.state.game === 'kopi') { kopiFx(f); return; }
+    if (G.state && G.state.game === 'order') { orderFx(f); return; }
     switch (f.type) {
       case 'say': bubble(f.pid, f.text, f.mood); break;
       case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
@@ -988,6 +1012,9 @@
     $('#table').classList.toggle('hidden', v !== 'bj');
     $('#pongView').classList.toggle('hidden', v !== 'pong');
     $('#kopiView').classList.toggle('hidden', v !== 'kopi');
+    $('#orderView').classList.toggle('hidden', v !== 'order');
+    if (v !== 'order' && OV.active) { OV.active = false; OV.reset(); }
+    if (v === 'order') OV.active = true;
     if (PV.visible !== (v === 'pong')) { PV.visible = v === 'pong'; PV.show(PV.visible); }
     if (KV.visible !== (v === 'kopi')) { KV.visible = v === 'kopi'; KV.show(KV.visible); }
   }
@@ -1104,6 +1131,59 @@
     confetti();
   }
 
+  // =============== INGAT ORDER ===============
+  function renderOrderControls(s, meP) {
+    const box = $('#controls');
+    const host = s.hostId === me.id, n = s.players.length, ph = s.phase, mine = s.cur === me.id;
+    const cur = s.players.find(p => p.id === s.cur);
+    const key = ['order', ph, mine, s.script && s.script.id, n, host, (G.relays || []).join()].join('|');
+    let html = '';
+    if (ph === 'lobby') {
+      html = host
+        ? `<div class="ctl-info">Ingat Order · Waiters <b>${n}/6</b></div>
+           <div class="ctl-row"><button class="btn red big" data-act="start">START!<small>${n < 2 ? 'Main sorang pun boleh' : 'Buka kedai'}</small></button></div>
+           <div class="ctl-hint">${n < 6 ? 'Share code ' + esc(s.code || '') + ' · ' : ''}${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
+        : `<div class="ctl-info">Ingat Order · waiting for host to <b>START</b></div><div class="ctl-hint">Remember what every customer orders!</div>`;
+    } else if (ph === 'show') {
+      html = mine ? '<div class="ctl-info"><b>Dengar baik-baik!</b> Remember every order...</div><div class="ctl-hint">The tablet opens when they finish talking</div>'
+        : `<div class="ctl-info"><b>${esc(cur ? cur.name : '')}</b> is taking the order...</div><div class="ctl-hint">Shh... let them listen</div>`;
+    } else if (ph === 'answer') {
+      html = mine ? '<div class="ctl-row"><button class="btn green big" data-act="submitOrder">HANTAR ORDER<small>Send to the kitchen</small></button></div>'
+        : `<div class="ctl-info"><b>${esc(cur ? cur.name : '')}</b> is keying in the order...</div><div class="ctl-hint">Did you remember it? Haha</div>`;
+    } else if (ph === 'reveal') {
+      const r = s.result || {};
+      html = `<div class="ctl-info">${esc(cur ? cur.name : '')}: <b>${r.correct || 0}/${r.total || 0}</b> betul · <b>+${r.pts || 0}</b>${r.perfect ? ' · PERFECT!' : ''}</div>` +
+        (mine || host ? '<div class="ctl-row"><button class="btn big" data-act="next">NEXT<small>Meja seterusnya</small></button></div>' : '<div class="ctl-hint">Next table coming...</div>');
+    } else if (ph === 'over') {
+      const w = s.ranking && s.ranking[0];
+      html = `<div class="ctl-info"><b>${esc(w ? w.name : '')}</b> best waiter · ${w ? w.score : 0} pts</div>
+        <div class="ctl-row">${host ? '<button class="btn red big" data-act="newGame">MAIN LAGI<small>Restart</small></button>' : ''}<button class="btn big" data-act="results">RESULTS</button><button class="btn big" data-act="menu">MAIN MENU</button></div>`;
+    }
+    setCtl(box, key, html);
+  }
+  function orderFx(f) {
+    OV.fx(f);
+    switch (f.type) {
+      case 'say': if (f.cust) OV.custSay(f.text); else bubble(f.pid, f.text, f.mood); break;
+      case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
+      case 'banner': showBanner(f.text, f.style); break;
+      case 'show': if (f.pid === me.id) { AU.play('turn'); showBanner('GILIRAN KAU!', 'info'); vibrate(80); } break;
+      case 'answer': if (f.pid === me.id) { AU.play('tada'); vibrate(60); } break;
+      case 'reveal': if (f.perfect) { confetti(); showBanner('PERFECT!', 'bj'); } break;
+      case 'gameover': confetti(); AU.play('tada'); break;
+    }
+  }
+  function showOrderResult() {
+    const s = G && G.state; if (!s || s.phase !== 'over' || !s.ranking) return;
+    const r = s.ranking;
+    const pd = (p, i) => p ? `<div class="pd p${i + 1}"><div class="av" style="background-image:url(${SPR.avatarSheet(p.avatar)})"></div><div class="nm">${esc(p.name)}</div><div class="ch">${p.score} pts</div><div class="blk">${i + 1}</div></div>` : '';
+    showOverlay(`<div class="modal"><h2>BEST WAITER · ${esc(r[0] ? r[0].name : '')}!</h2>
+      <div class="podium">${pd(r[1], 1)}${pd(r[0], 0)}${pd(r[2], 2)}</div>
+      ${r.map((p, i) => `<p>${i + 1}. ${esc(p.name)} — <b>${p.perfect}/${p.tables}</b> tables perfect · ${p.score} pts</p>`).join('')}
+      <div class="row">${G.isHost ? '<button class="btn red" data-h="newGame">MAIN LAGI</button>' : ''}<button class="btn" data-h="menu">MAIN MENU</button><button class="btn" data-h="close">CLOSE</button></div></div>`, 'podium');
+    confetti();
+  }
+
   // =============== KOPI TUMPAH ===============
   function renderKopiHud(s) {
     const box = $('#kopiView .kq');
@@ -1202,6 +1282,19 @@
 
   function showHelp() {
     AU.unlock();
+    if ((G && G.state && G.state.game === 'order') || (!G && me.mode === 'order')) {
+      showOverlay(`<div class="modal"><h2>INGAT ORDER · CARA MAIN</h2>
+        <ul>
+          <li>You are the waiter. Players take turns, one table each.</li>
+          <li>Customers say their order one by one. <b>Dengar baik-baik</b> — then the bubbles disappear!</li>
+          <li>Key the whole order into the tablet: drinks are <b>PANAS</b> (hot) or <b>AIS</b>, plus the food. Use − and + for how many.</li>
+          <li>30 seconds, then tap <b>HANTAR ORDER</b>.</li>
+          <li>+10 for each right item, −5 for each wrong one, +20 for a perfect table.</li>
+          <li>5 tables each, from 1 customer up to 4. From table 3, someone may shout <b>"tambah satu..."</b>. At table 5 someone also <b>tukar</b> (changes) their order!</li>
+        </ul>
+        <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
+      return;
+    }
     if ((G && G.state && G.state.game === 'kopi') || (!G && me.mode === 'kopi')) {
       showOverlay(`<div class="modal"><h2>KOPI TUMPAH · CARA MAIN</h2>
         <ul>
@@ -1308,7 +1401,7 @@
     if (!G || !G.code) return;
     AU.play('click');
     const url = location.origin + location.pathname + '?room=' + G.code;
-    const text = 'Jom main ' + (G.state && G.state.game === 'pong' ? 'Telur Pong' : G.state && G.state.game === 'kopi' ? 'Kopi Tumpah' : 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
+    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
     if (navigator.share) { navigator.share({ title: 'Kopitiam 21', text, url }).catch(() => {}); return; }
     const done = () => toast('Link copied! Paste to your friends');
     if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(done, () => toast('Code: ' + G.code));
@@ -1330,6 +1423,7 @@
   Scene.init($('#scene'));
   PV.mount($('#pongCanvas'), { onThrow: (p, a) => send({ t: 'throw', p, a }) });
   KV.mount($('#kopiCanvas'), { onLevel: m => send(m) });
+  OV.mount($('#orderView'), { onChit: items => send({ t: 'chit', items }) });
   KV.onLocal = (ok) => {
     const m = $('#kopiMsg'); if (!m) return;
     const html = ok ? '<b>OK!</b> Lepas bila-bila — or risk a bit more...' : 'Your turn — <b>even one drop</b> counts!';
