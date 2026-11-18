@@ -197,6 +197,25 @@
     ptext(g, c.price, x + w - tw(c.price) - 5, ctop + 5, '#c0392b');
     if (c.cart) { g.fillStyle = '#2a1a12'; g.fillRect(x + 6, base - 2, 6, 4); g.fillRect(x + w - 12, base - 2, 6, 4); }
   }
+  // after 7:30pm the hawkers go home: shutters down, signs dark, a TUTUP note
+  function drawStallsClosed() {
+    for (const st of L.stalls || []) {
+      const x = st.x, w = st.w, base = L.floor + 2, top = st.ctop - 13;
+      cx.fillStyle = '#2a1a12'; cx.fillRect(x - 1, top - 1, w + 2, base - top + 1);
+      cx.fillStyle = '#8f979f'; cx.fillRect(x, top, w, base - top);
+      cx.fillStyle = '#6f777f'; for (let y = top + 2; y < base; y += 3) cx.fillRect(x, y, w, 1);
+      cx.fillStyle = '#b9c0c8'; cx.fillRect(x, top, w, 1);
+      cx.fillStyle = '#4a4a4a'; cx.fillRect(x + Math.round(w / 2) - 3, base - 4, 6, 2);
+      // TUTUP note
+      const nw = tw('TUTUP') + 6, nx = x + Math.round((w - nw) / 2), ny = top + 4;
+      cx.fillStyle = '#2a1a12'; cx.fillRect(nx - 1, ny - 1, nw + 2, 9);
+      cx.fillStyle = '#fbf3dc'; cx.fillRect(nx, ny, nw, 7);
+      ptext(cx, 'TUTUP', nx + 3, ny + 1, '#c0392b');
+      // signboard lights off
+      const signH = 6 * STALLS[st.kind].lines.length + 4, signY = st.ctop - 22 - signH;
+      cx.fillStyle = 'rgba(10,8,20,.45)'; cx.fillRect(x - 1, signY - 1, w + 2, signH + 6);
+    }
+  }
   function drawStallLife(t) {
     for (const st of L.stalls || []) {
       const c = STALLS[st.kind];
@@ -400,7 +419,7 @@
     drawFan(Math.round(W * 0.82), t + 0.4, W < 200 ? 12 : 18);
     drawClock(t);
     drawCicak(dt);
-    drawStallLife(t);
+    if (per === 'night') drawStallsClosed(); else drawStallLife(t);
     drawTehMan(t);
     drawCat(dt);
     // evening / night: the shop gets darker and the light tubes come on
