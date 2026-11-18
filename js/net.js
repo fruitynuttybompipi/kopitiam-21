@@ -4,6 +4,33 @@
   'use strict';
   const PREFIX = 'kopitiam21-';
   const NET = {};
+
+  // ICE servers: public STUN + optional TURN relay from js/config.js
+  const CFG = root.K21_CONFIG || {};
+  const STUN = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+  const PEERJS_TURN = [
+    { urls: 'turn:eu-0.turn.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' },
+    { urls: 'turn:us-0.turn.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' },
+  ];
+  let icePromise = null;
+  function getIce() {
+    if (icePromise) return icePromise;
+    icePromise = (async () => {
+      let extra = Array.isArray(CFG.iceServers) ? CFG.iceServers.slice() : [];
+      if (CFG.turnCredentialsUrl) {
+        try {
+          const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 6000);
+          const r = await fetch(CFG.turnCredentialsUrl, { signal: ctl.signal });
+          clearTimeout(t);
+          const list = await r.json();
+          if (Array.isArray(list)) extra = extra.concat(list);
+        } catch (e) { console.warn('TURN credentials fetch failed', e); }
+      }
+      NET.hasRelay = extra.some(s => String(s.urls).indexOf('turn') >= 0);
+      return STUN.concat(extra, PEERJS_TURN);
+    })();
+    return icePromise;
+  }
   // optional self-hosted PeerJS server: ?peerhost=example.com&peerport=443&peerpath=/
   const qs = new URLSearchParams(root.location.search);
   const OPTS = { debug: 1 };
@@ -24,7 +51,7 @@
     };
 
     function create() {
-      peer = new root.Peer(PREFIX + api.code, OPTS);
+      peer = new root.Peer(PREFIX + api.code, Object.assign({ config: { iceServers: ice } }, OPTS));
       peer.on('open', () => h.onReady(api.code));
       peer.on('error', e => {
         if (closed) return;
@@ -64,7 +91,8 @@
         conn.on('error', () => {});
       });
     }
-    create();
+    let ice = null;
+    getIce().then(list => { ice = list; if (!closed) create(); });
 
     // heartbeat: phones that sleep never send "close", so ping and drop silent ones
     const hb = setInterval(() => {
@@ -107,7 +135,7 @@
     function connect() {
       if (peer && !peer.destroyed && peer.open) { openConn(); return; }
       if (peer) { try { peer.destroy(); } catch (e) {} }
-      peer = new root.Peer(OPTS);
+      peer = new root.Peer(Object.assign({ config: { iceServers: ice } }, OPTS));
       peer.on('open', openConn);
       peer.on('error', e => {
         if (closed) return;
@@ -117,8 +145,9 @@
       });
       peer.on('disconnected', () => { if (!closed) { try { peer.reconnect(); } catch (e) {} } });
     }
-    connect();
-    const firstTO = setTimeout(() => { if (!everOpen) fail('timeout'); }, 20000);
+    let ice = null;
+    getIce().then(list => { ice = list; if (!closed) connect(); });
+    const firstTO = setTimeout(() => { if (!everOpen) fail('timeout'); }, 30000);
     const wd = setInterval(() => { if (everOpen && !closed && !retrying && Date.now() - lastMsg > 11000) retry(); }, 2000);
     return api;
   };

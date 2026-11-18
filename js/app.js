@@ -230,7 +230,7 @@
       onError: e => {
         const msg = e === 'notfound' ? 'Meja <b>' + esc(code) + '</b> not found. Check the code, or ask the host to open the table again.'
           : e === 'lost' ? 'Host tutup kedai — the table closed or the connection was lost.'
-            : e === 'timeout' ? 'Cannot connect to the table. Try switching Wi-Fi / mobile data.'
+            : e === 'timeout' ? 'Cannot reach the host\'s phone. Try both on the same Wi-Fi.' + (NET.hasRelay ? '' : '<br><small>Host: add a free TURN relay in js/config.js so mobile data works.</small>')
               : e === 'browser' ? 'This browser cannot play online. Try Chrome or Safari.'
                 : 'Connection error: ' + esc(e);
         leaveGame(true);
