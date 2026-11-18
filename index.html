@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#3b2416">
+<title>Kopitiam 21 · Blackjack</title>
+<meta name="description" content="Pixel blackjack with friends at the kopitiam. Huat ah!">
+<link rel="preload" href="fonts/PressStart2P.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/VT323.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect x='3' y='5' width='8' height='8' fill='%23fbfbf4'/><rect x='3' y='5' width='8' height='2' fill='%233a2010'/><rect x='11' y='7' width='2' height='4' fill='%23fbfbf4'/><rect x='2' y='13' width='11' height='2' fill='%233fae6a'/></svg>">
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<!-- ============ HOME ============ -->
+<section id="home" class="screen">
+  <div class="sign-wrap">
+    <div class="chain l"></div><div class="chain r"></div>
+    <h1 class="sign"><span>KOPITIAM</span> <b>21</b></h1>
+  </div>
+  <p class="tagline">Blackjack · Huat Ah!</p>
+
+  <div class="chit">
+    <div class="chit-head"><span>ORDER CHIT</span><span>No. 21</span></div>
+
+    <label for="nameIn">NAMA / Your name</label>
+    <input id="nameIn" maxlength="14" autocomplete="off" placeholder="Ah Beng">
+
+    <label>PILIH AVATAR</label>
+    <div id="avatarGrid" class="pick-grid"></div>
+
+    <label>MINUM APA? <small>(your drink)</small></label>
+    <div id="drinkGrid" class="drink-grid"></div>
+
+    <div class="home-actions">
+      <button id="btnCreate" class="btn red big">BUKA MEJA<small>Create table</small></button>
+      <div class="or">— atau / or —</div>
+      <div class="join-row">
+        <input id="codeIn" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="CODE">
+        <button id="btnJoin" class="btn green big">MASUK<small>Join</small></button>
+      </div>
+    </div>
+    <div class="chit-foot">
+      <button id="btnHelp" class="link">How to play?</button>
+      <span>Play chips only · no real money</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GAME ============ -->
+<section id="game" class="screen hidden">
+  <header class="topbar">
+    <div class="brand">KOPITIAM<b>21</b></div>
+    <button id="codeChip" class="code-chip" title="Share table link">MEJA <b id="codeTxt">····</b><i>SHARE</i></button>
+    <div class="tools">
+      <button id="btnMusic" class="ico" title="Music" aria-label="Music"></button>
+      <button id="btnSfx" class="ico" title="Sound" aria-label="Sound"></button>
+      <button id="btnHost" class="ico hidden" title="Host menu" aria-label="Host menu"></button>
+      <button id="btnHelp2" class="ico" title="Rules" aria-label="Rules"></button>
+      <button id="btnLeave" class="ico" title="Leave" aria-label="Leave"></button>
+    </div>
+  </header>
+
+  <div id="timerBar"><span id="timerLbl"></span><div class="track"><i id="timerFill"></i></div><b id="timerSec"></b></div>
+
+  <main id="tableWrap">
+    <div id="table">
+      <div id="taukeZone">
+        <div id="shoe"><i></i><i></i><i></i><span id="shoeLeft"></span></div>
+        <div class="tk-who">
+          <div class="bubble"></div>
+          <div class="avwrap"><div class="av"></div><div class="crown"></div></div>
+          <div class="drink-wrap"><span class="drink"></span></div>
+          <div class="plate"><span class="badge">TAUKE</span><b class="nm">?</b><span class="chipsline"></span></div>
+        </div>
+        <div class="tk-hand"><div class="cards" id="dealerCards"></div><span class="tot" id="dealerTot"></span></div>
+      </div>
+      <div id="tableMsg"></div>
+      <div id="seats"></div>
+    </div>
+  </main>
+
+  <div id="ticker"><span></span></div>
+  <footer id="controls"></footer>
+
+  <button id="emoteBtn" class="ico big" aria-label="Emotes"></button>
+  <div id="emoteBar" class="hidden"></div>
+</section>
+
+<div id="fxLayer"></div>
+<div id="banner"></div>
+<div id="overlay" class="hidden"></div>
+<div id="status" class="hidden"></div>
+<div id="toast"></div>
+
+<script src="js/vendor/peerjs.min.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/net.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
