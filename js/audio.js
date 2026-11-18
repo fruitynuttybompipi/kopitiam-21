@@ -72,6 +72,22 @@
     deny: t => { tone(180, t, 0.08, 'square', 0.15); tone(150, t + 0.09, 0.12, 'square', 0.15); },
   };
 
+  // continuous pouring sound
+  let pourSrc = null, pourGain = null;
+  AU.pour = function (on) {
+    if (!ctx) return;
+    if (on && !pourSrc && AU.sfxOn) {
+      if (!noiseBuf) noise(ctx.currentTime, 0.01, 0.0001, 1000);
+      pourSrc = ctx.createBufferSource(); pourSrc.buffer = noiseBuf; pourSrc.loop = true;
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 0.8;
+      pourGain = ctx.createGain(); pourGain.gain.setValueAtTime(0.0001, ctx.currentTime); pourGain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.08);
+      pourSrc.connect(f); f.connect(pourGain); pourGain.connect(sfxGain); pourSrc.start();
+    } else if (!on && pourSrc) {
+      const s = pourSrc, g = pourGain; pourSrc = null;
+      g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.05); setTimeout(() => { try { s.stop(); } catch (e) {} }, 300);
+    }
+  };
+
   AU.unlock = unlock;
   AU.play = function (name) {
     if (!ctx || !AU.sfxOn || !SFX[name]) return;

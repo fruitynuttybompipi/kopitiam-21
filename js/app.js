@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v7';
+  const VERSION = 'v8';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -182,7 +182,7 @@
 
   function startHost() {
     newSession('host');
-    const Engine = me.mode === 'pong' ? PONG.Table : BJ.Table;
+    const Engine = me.mode === 'pong' ? PONG.Table : me.mode === 'kopi' ? KOPI.Table : BJ.Table;
     const table = new Engine({
       hostId: me.id,
       onChange: flush,
@@ -324,6 +324,19 @@
     if (s.code) { G.code = s.code; $('#codeTxt').textContent = s.code; }
     const meP = s.players.find(p => p.id === me.id);
     G.isHost = s.hostId === me.id;
+    if (s.game === 'kopi') {
+      $('#btnHost').classList.add('hidden');
+      setView('kopi');
+      KV.render(s, me.id);
+      renderKopiHud(s);
+      renderTimer(s, meP);
+      renderKopiControls(s, meP);
+      renderTicker(s);
+      $('#game').classList.toggle('myturn', s.phase === 'pour' && !!s.turn && s.turn.pid === me.id);
+      if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showKopiResult, 1600);
+      firstRender = false;
+      return;
+    }
     if (s.game === 'pong') {
       $('#btnHost').classList.add('hidden');
       setPongMode(true);
@@ -579,6 +592,13 @@
     const t = s.timer;
     if (!t) { G.timer = null; bar.classList.remove('on'); return; }
     if (!G.timer || G.timer.id !== t.id) G.timer = { id: t.id, end: performance.now() + t.left, total: t.total || 1 };
+    if (s.game === 'kopi') {
+      const mine = !!(s.turn && s.turn.pid === me.id);
+      setText($('#timerLbl'), mine ? 'YOUR POUR!' : (s.turn ? nameOf(s.turn.pid).toUpperCase() + ' POURING...' : ''));
+      G.timer.mine = mine && t.kind === 'pour';
+      bar.classList.add('on');
+      return;
+    }
     if (s.game === 'pong') {
       const mine = !!(s.turn && s.turn.pid === me.id);
       setText($('#timerLbl'), mine ? 'YOUR THROW!' : (s.turn ? nameOf(s.turn.pid).toUpperCase() + ' AIMING...' : ''));
@@ -753,6 +773,7 @@
       case 'hostMenu': showHostMenu(); return;
       case 'newGame': send({ t: 'newGame' }); closeOverlay(); return;
       case 'results': showPodium(); return;
+      case 'menu': confirmLeave(); return;
     }
   }
 
@@ -760,6 +781,7 @@
   function targetFor(pid) {
     if (!G || !G.state) return null;
     if (G.state.game === 'pong') return $$('#pongView .ph-card').find(c => c.dataset.pid === pid) || null;
+    if (G.state.game === 'kopi') return $$('#kopiView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (pid === G.state.taukeId) return $('.tk-who');
     return seatEls.get(pid) || null;
   }
@@ -768,6 +790,7 @@
   function onFx(f) {
     if (!G || !f) return;
     if (G.state && G.state.game === 'pong') { pongFx(f); return; }
+    if (G.state && G.state.game === 'kopi') { kopiFx(f); return; }
     switch (f.type) {
       case 'say': bubble(f.pid, f.text, f.mood); break;
       case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
@@ -808,7 +831,7 @@
     b.textContent = text;
     b.className = 'bubble ' + (md || '');
     b.style.marginLeft = '0px';
-    if (t.classList.contains('tk-who') || t.classList.contains('ph-card')) { void b.offsetWidth; b.classList.add('show'); if (md === 'happy' || md === 'sad') mood($('.av', t), md); return; }
+    if (t.classList.contains('tk-who') || t.classList.contains('ph-card') || t.classList.contains('kp-card')) { void b.offsetWidth; b.classList.add('show'); if (md === 'happy' || md === 'sad') mood($('.av', t), md); return; }
     const pr = b.parentElement.getBoundingClientRect(), half = b.offsetWidth / 2, cx = pr.left + pr.width / 2;
     const shift = Math.max(6 - (cx - half), Math.min(0, innerWidth - 6 - (cx + half)));
     b.style.marginLeft = shift + 'px';
@@ -959,11 +982,14 @@
   }
 
   // =============== TELUR PONG ===============
-  function setPongMode(on) {
-    $('#banner').classList.toggle('low', on);
-    $('#table').classList.toggle('hidden', on);
-    $('#pongView').classList.toggle('hidden', !on);
-    if (PV.visible !== on) { PV.visible = on; PV.show(on); }
+  function setPongMode(on) { setView(on ? 'pong' : 'bj'); }
+  function setView(v) {
+    $('#banner').classList.toggle('low', v !== 'bj');
+    $('#table').classList.toggle('hidden', v !== 'bj');
+    $('#pongView').classList.toggle('hidden', v !== 'pong');
+    $('#kopiView').classList.toggle('hidden', v !== 'kopi');
+    if (PV.visible !== (v === 'pong')) { PV.visible = v === 'pong'; PV.show(PV.visible); }
+    if (KV.visible !== (v === 'kopi')) { KV.visible = v === 'kopi'; KV.show(KV.visible); }
   }
 
   function renderPongHud(s) {
@@ -1078,6 +1104,84 @@
     confetti();
   }
 
+  // =============== KOPI TUMPAH ===============
+  function renderKopiHud(s) {
+    const box = $('#kopiView .kq');
+    const ids = s.order && s.order.length && s.phase !== 'lobby' ? s.order.concat(s.players.map(p => p.id).filter(id => !s.order.includes(id))) : s.players.map(p => p.id);
+    const have = new Map($$('.kp-card', box).map(c => [c.dataset.pid, c]));
+    ids.forEach((id, i) => {
+      const p = s.players.find(x => x.id === id); if (!p) return;
+      let c = have.get(id);
+      if (!c) { c = el('div', 'kp-card', '<div class="ph-box"><span class="av"></span><b class="nm"></b><small></small></div><div class="bubble"></div>'); c.dataset.pid = id; }
+      have.delete(id);
+      if (box.children[i] !== c) box.insertBefore(c, box.children[i] || null);
+      setBg($('.av', c), SPR.avatarSheet(p.avatar));
+      setText($('.nm', c), p.name);
+      const turn = s.phase === 'pour' && s.turn && s.turn.pid === id;
+      setText($('small', c), p.out && s.phase !== 'lobby' ? (s.loser === id ? 'TUMPAH' : 'OUT') : turn ? 'TUANG' : !p.connected ? 'OFF' : p.wins ? p.wins + ' WIN' : '');
+      c.classList.toggle('turn', !!turn);
+      c.classList.toggle('out', !!p.out && s.phase !== 'lobby');
+      c.classList.toggle('me', id === me.id);
+    });
+    for (const c of have.values()) c.remove();
+  }
+
+  function renderKopiControls(s, meP) {
+    const box = $('#controls');
+    const host = s.hostId === me.id, n = s.players.length, ph = s.phase;
+    const mine = !!(s.turn && s.turn.pid === me.id) && ph === 'pour';
+    const key = ['kopi', ph, mine, s.turn && s.turn.id, n, host, s.winner, meP && meP.out, (G.relays || []).join()].join('|');
+    let html = '';
+    if (ph === 'lobby') {
+      html = host
+        ? `<div class="ctl-info">Kopi Tumpah · Players <b>${n}/${KOPI.MAX}</b></div>
+           <div class="ctl-row">${n < KOPI.MAX ? '<button class="btn fixed" data-act="addBot">+ BOT</button>' : ''}
+           <button class="btn red big" data-act="start" ${n < 2 ? 'disabled' : ''}>START!<small>${n < 2 ? 'Tunggu kawan...' : 'Mula main'}</small></button></div>
+           <div class="ctl-hint">${n < 2 ? 'Share code ' + esc(s.code || '') + ' · ' : ''}${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
+        : `<div class="ctl-info">Kopi Tumpah · waiting for host to <b>START</b></div><div class="ctl-hint">Pour kopi in turns. Don't be the one who tumpah!</div>`;
+    } else if (ph === 'pick') {
+      html = '<div class="ctl-info">Siapa tuang dulu...?</div>';
+    } else if (ph === 'over') {
+      const w = s.players.find(p => p.id === s.winner);
+      html = `<div class="ctl-info"><b>${esc(w ? w.name : '?')}</b> MENANG! Semua lain belanja kopi.</div>
+        <div class="ctl-row">${host ? '<button class="btn red big" data-act="newGame">MAIN LAGI<small>Restart</small></button>' : ''}<button class="btn big" data-act="menu">MAIN MENU<small>${host ? 'Close table' : 'Leave table'}</small></button></div>`;
+    } else if (mine) {
+      html = `<div class="ctl-info" id="kopiMsg">Tuang sampai <b>garisan kuning</b>, then let go!</div>
+        <div class="ctl-row"><button class="btn green big hold" data-hold="1">TUANG!<small>Tekan &amp; tahan · hold to pour</small></button></div>`;
+    } else if (ph === 'spill') {
+      const l = s.players.find(p => p.id === s.loser);
+      html = `<div class="ctl-info"><b>${esc(l ? l.name : '')}</b> TUMPAH! Belanja kopi!</div>`;
+    } else {
+      const who = s.turn ? nameOf(s.turn.pid) : '...';
+      html = `<div class="ctl-info"><b>${esc(who)}</b> is pouring...</div><div class="ctl-hint">${meP && meP.out ? 'You are out this game — tengok je' : 'Your turn soon. Steady hand!'}</div>`;
+    }
+    setCtl(box, key, html);
+  }
+
+  function kopiFx(f) {
+    KV.fx(f);
+    switch (f.type) {
+      case 'say': bubble(f.pid, f.text, f.mood); break;
+      case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
+      case 'banner': showBanner(f.text, f.style); break;
+      case 'pick': taukePick(f); break;
+      case 'turn': if (f.pid === me.id) { AU.play('turn'); showBanner('GILIRAN KAU!', 'info'); vibrate(80); } break;
+      case 'spill': shakeScreen(); if (f.pid === me.id) vibrate([80, 40, 120]); mood(avatarOf(f.pid), 'sad'); break;
+      case 'gameover': confetti(); AU.play(f.winner === me.id ? 'tada' : 'win'); break;
+    }
+  }
+
+  function showKopiResult() {
+    const s = G && G.state; if (!s || s.phase !== 'over') return;
+    const w = s.players.find(p => p.id === s.winner);
+    const others = s.players.filter(p => p.id !== s.winner);
+    showOverlay(`<div class="modal"><h2>JUARA KOPI TUMPAH · ${esc(w ? w.name : '')}!</h2>
+      <div class="podium">${w ? `<div class="pd p1"><div class="av" style="background-image:url(${SPR.avatarSheet(w.avatar)})"></div><div class="nm">${esc(w.name)}</div><div class="ch">${w.wins} WIN</div><div class="blk">1</div></div>` : ''}</div>
+      <p style="text-align:center">Belanja kopi: ${others.map(p => esc(p.name)).join(', ') || '-'}</p>
+      <div class="row">${G.isHost ? '<button class="btn red" data-h="newGame">MAIN LAGI</button>' : ''}<button class="btn" data-h="menu">MAIN MENU</button><button class="btn" data-h="close">CLOSE</button></div></div>`, 'podium');
+    confetti();
+  }
+
   // =============== OVERLAYS ===============
   function showOverlay(html, kind) {
     if (G) G.overlay = kind || 'modal';
@@ -1098,6 +1202,19 @@
 
   function showHelp() {
     AU.unlock();
+    if ((G && G.state && G.state.game === 'kopi') || (!G && me.mode === 'kopi')) {
+      showOverlay(`<div class="modal"><h2>KOPI TUMPAH · CARA MAIN</h2>
+        <ul>
+          <li>Everyone takes turns pouring kopi into <b>the same cup</b>.</li>
+          <li><b>Press and hold</b> TUANG (or the cup) to pour. The longer you hold, the faster the kettle pours. Let go to stop — a few drops still fall after.</li>
+          <li>Each turn you must pour at least up to the <b>yellow line</b>.</li>
+          <li>The kopi can bulge a little above the rim, but the real spill point is <b>secret</b> and different every cup.</li>
+          <li>Whoever makes it <b>tumpah</b> is out and <b>belanja kopi</b>! A new cup starts. Last player standing wins.</li>
+          <li>10 seconds per turn, or the kettle pours the minimum for you.</li>
+        </ul>
+        <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
+      return;
+    }
     if ((G && G.state && G.state.game === 'pong') || (!G && me.mode === 'pong')) {
       showOverlay(`<div class="modal"><h2>TELUR PONG · CARA MAIN</h2>
         <ul>
@@ -1182,6 +1299,7 @@
         break;
       case 'addBot': send({ t: 'addBot' }); break;
       case 'newGame': send({ t: 'newGame' }); closeOverlay(); break;
+      case 'menu': closeOverlay(); confirmLeave(); break;
     }
   }
 
@@ -1190,7 +1308,7 @@
     if (!G || !G.code) return;
     AU.play('click');
     const url = location.origin + location.pathname + '?room=' + G.code;
-    const text = 'Jom main ' + (G.state && G.state.game === 'pong' ? 'Telur Pong' : 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
+    const text = 'Jom main ' + (G.state && G.state.game === 'pong' ? 'Telur Pong' : G.state && G.state.game === 'kopi' ? 'Kopi Tumpah' : 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
     if (navigator.share) { navigator.share({ title: 'Kopitiam 21', text, url }).catch(() => {}); return; }
     const done = () => toast('Link copied! Paste to your friends');
     if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(done, () => toast('Code: ' + G.code));
@@ -1211,6 +1329,24 @@
   // =============== boot ===============
   Scene.init($('#scene'));
   PV.mount($('#pongCanvas'), { onThrow: (p, a) => send({ t: 'throw', p, a }) });
+  KV.mount($('#kopiCanvas'), { onLevel: m => send(m) });
+  KV.onLocal = (ok) => {
+    const m = $('#kopiMsg'); if (!m) return;
+    const html = ok ? '<b>OK!</b> Lepas bila-bila — or risk a bit more...' : 'Tuang sampai <b>garisan kuning</b>, then let go!';
+    if (m._h !== html) { m._h = html; m.innerHTML = html; }
+  };
+  // hold-to-pour button (pointer + space bar)
+  $('#controls').addEventListener('pointerdown', e => {
+    const b = e.target.closest('[data-hold]'); if (!b) return;
+    e.preventDefault(); b.classList.add('on'); KV.press();
+    try { b.setPointerCapture(e.pointerId); } catch (x) {}
+  });
+  const holdEnd = () => { $$('#controls [data-hold]').forEach(b => b.classList.remove('on')); KV.release(); };
+  window.addEventListener('pointerup', holdEnd);
+  window.addEventListener('pointercancel', holdEnd);
+  $('#controls').addEventListener('contextmenu', e => { if (e.target.closest('[data-hold]')) e.preventDefault(); });
+  window.addEventListener('keydown', e => { if (e.code === 'Space' && !e.repeat && KV.isMine() && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); KV.press(); } });
+  window.addEventListener('keyup', e => { if (e.code === 'Space') KV.release(); });
   PV.onAim = p => {
     const pw = $('#pongView .ph-power');
     if (p == null) { pw.classList.add('hidden'); return; }

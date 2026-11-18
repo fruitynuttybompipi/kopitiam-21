@@ -103,6 +103,7 @@ input::placeholder { color: #7d6c50; }
 .pick.mode { padding: 12px 6px 10px; align-items: center; text-align: center; }
 .pick.mode b { font-family: var(--px); font-size: 11px; }
 .pick.mode small { font-size: 16px; margin-top: 6px; white-space: normal; }
+.pick.mode.wide { grid-column: 1 / -1; }
 
 /* ---------- avatars & drinks ---------- */
 .av { width: var(--av); height: var(--av); background-size: 200% 100%; background-repeat: no-repeat; background-position: 0 0; animation: blink 4.2s steps(1) infinite; }
@@ -262,6 +263,23 @@ input::placeholder { color: #7d6c50; }
 .ph-hint { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); font-family: var(--px); font-size: 12px; color: #fff; text-shadow: 2px 2px 0 var(--ink); pointer-events: none; animation: hop .6s steps(2) infinite; white-space: nowrap; }
 .ph-power { position: absolute; right: 10px; top: 40%; width: 16px; height: 110px; background: rgba(42, 26, 18, .82); box-shadow: inset 0 0 0 2px var(--ink); pointer-events: none; }
 .ph-power i { position: absolute; left: 3px; right: 3px; bottom: 3px; height: 0; background: var(--gold); }
+
+/* ---------- kopi tumpah ---------- */
+#kopiView { position: relative; flex: 1; min-height: 0; }
+#kopiCanvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; touch-action: none; }
+.kq { position: absolute; left: 6px; right: 6px; top: 6px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; pointer-events: none; }
+.kp-card { position: relative; width: 62px; text-align: center; }
+.kp-card .ph-box { flex-direction: column; gap: 2px; padding: 5px 3px 4px; }
+.kp-card .av { --av: 36px; margin: 0 auto; }
+.kp-card .nm { display: block; font-size: 15px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 56px; }
+.kp-card small { display: block; font-family: var(--px); font-size: 7px; color: var(--gold); min-height: 8px; }
+.kp-card.turn .ph-box { background: var(--gold); color: var(--ink); }
+.kp-card.turn small { color: var(--red-d); }
+.kp-card.out { filter: grayscale(1); opacity: .5; }
+.kp-card.me .nm { text-decoration: underline; }
+.kp-card .bubble { left: 50%; bottom: auto; top: calc(100% + 6px); }
+.btn.hold { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.btn.hold.on { transform: translateY(3px); filter: brightness(1.15); box-shadow: inset 0 0 0 3px var(--ink), inset 0 5px 0 0 rgba(0, 0, 0, .3); }
 
 /* ---------- controls ---------- */
 #ticker { flex: none; height: 24px; background: var(--green-d); color: #cfe9d6; font-size: 18px; line-height: 24px; padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 3px solid var(--ink); position: relative; z-index: 3; }

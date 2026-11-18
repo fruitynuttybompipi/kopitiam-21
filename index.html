@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#3b2416">
-<title>Kopitiam 21 · Uncle Jack 21 &amp; Telur Pong</title>
+<title>Kopitiam 21 · Uncle Jack 21, Telur Pong &amp; Kopi Tumpah</title>
 <meta name="description" content="Uncle Jack 21 and Telur Pong with friends at the kopitiam. Huat ah!">
 <link rel="preload" href="fonts/PressStart2P.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/VT323.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/style.css?v=202611181605">
+<link rel="stylesheet" href="css/style.css?v=202611181628">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect x='3' y='5' width='8' height='8' fill='%23fbfbf4'/><rect x='3' y='5' width='8' height='2' fill='%233a2010'/><rect x='11' y='7' width='2' height='4' fill='%23fbfbf4'/><rect x='2' y='13' width='11' height='2' fill='%233fae6a'/></svg>">
 </head>
 <body>
@@ -20,7 +20,7 @@
     <div class="chain l"></div><div class="chain r"></div>
     <h1 class="sign"><span>KOPITIAM</span> <b>21</b></h1>
   </div>
-  <p class="tagline">Uncle Jack 21 · Telur Pong</p>
+  <p class="tagline">Uncle Jack 21 · Telur Pong · Kopi Tumpah</p>
 
   <div class="chit">
     <div class="chit-head"><span>ORDER CHIT</span><span>No. 21</span></div>
@@ -29,6 +29,7 @@
     <div id="modeGrid" class="mode-grid">
       <button class="pick mode" data-mode="bj" type="button"><b>UNCLE JACK 21</b><small>2–6 players</small></button>
       <button class="pick mode" data-mode="pong" type="button"><b>TELUR PONG</b><small>2 players · eggs</small></button>
+      <button class="pick mode wide" data-mode="kopi" type="button"><b>KOPI TUMPAH</b><small>2–6 players · don't spill the kopi!</small></button>
     </div>
 
     <label for="nameIn">NAMA / Your name</label>
@@ -97,6 +98,10 @@
       <div class="ph-hint hidden">SWIPE UP!<i></i></div>
       <div class="ph-power hidden"><i></i></div>
     </div>
+    <div id="kopiView" class="hidden">
+      <canvas id="kopiCanvas"></canvas>
+      <div class="kq"></div>
+    </div>
   </main>
 
   <div id="ticker"><span></span></div>
@@ -112,15 +117,17 @@
 <div id="status" class="hidden"></div>
 <div id="toast"></div>
 
-<script src="js/vendor/mqtt.min.js?v=202611181605"></script>
-<script src="js/sprites.js?v=202611181605"></script>
-<script src="js/pong.js?v=202611181605"></script>
-<script src="js/engine.js?v=202611181605"></script>
-<script src="js/audio.js?v=202611181605"></script>
-<script src="js/scene.js?v=202611181605"></script>
-<script src="js/config.js?v=202611181605"></script>
-<script src="js/pongview.js?v=202611181605"></script>
-<script src="js/net.js?v=202611181605"></script>
-<script src="js/app.js?v=202611181605"></script>
+<script src="js/vendor/mqtt.min.js?v=202611181628"></script>
+<script src="js/sprites.js?v=202611181628"></script>
+<script src="js/pong.js?v=202611181628"></script>
+<script src="js/kopi.js?v=202611181628"></script>
+<script src="js/engine.js?v=202611181628"></script>
+<script src="js/audio.js?v=202611181628"></script>
+<script src="js/scene.js?v=202611181628"></script>
+<script src="js/config.js?v=202611181628"></script>
+<script src="js/pongview.js?v=202611181628"></script>
+<script src="js/kopiview.js?v=202611181628"></script>
+<script src="js/net.js?v=202611181628"></script>
+<script src="js/app.js?v=202611181628"></script>
 </body>
 </html>

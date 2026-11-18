@@ -1,6 +1,6 @@
-# Kopitiam 21 · Uncle Jack 21 & Telur Pong
+# Kopitiam 21 · Uncle Jack 21, Telur Pong & Kopi Tumpah
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with two modes: **Uncle Jack 21** (blackjack) and **Telur Pong**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with three games: **Uncle Jack 21** (blackjack), **Telur Pong** and **Kopi Tumpah**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -27,6 +27,16 @@ Pick **TELUR PONG** on the first screen before tapping BUKA MEJA.
 - The first to sink all 6 of the other player's cups wins. The host can tap **REMATCH**, and the loser throws first.
 - Playing alone? The host can add a bot.
 
+## Kopi Tumpah (2–6 players)
+
+Pick **KOPI TUMPAH** on the first screen before tapping BUKA MEJA.
+
+- Everyone takes turns pouring kopi into the same glass. **Press and hold TUANG** (or the space bar) to pour; the longer you hold, the faster it pours. A few drops still fall after you let go.
+- Each turn you must pour at least up to the yellow line. You have 10 seconds, or the kettle pours the minimum for you.
+- The kopi can bulge above the rim, but the real spill point is secret and changes every cup.
+- Whoever makes it **tumpah** is out and belanja kopi. A new cup starts, and the last player left wins.
+- When the game ends, the host can tap **MAIN LAGI** to play again, and anyone can tap **MAIN MENU** to go back to the first screen.
+
 ## Uncle Jack 21 house rules
 
 - Everyone starts with **1000 chips**. These are play chips only, with no real money.
@@ -43,7 +53,7 @@ Pick **TELUR PONG** on the first screen before tapping BUKA MEJA.
 
 ## Testing alone
 
-Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 bots, or `index.html?offline&autohost&bots=1&autostart&mode=pong` for Telur Pong against a bot. No network is used.
+Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 bots, or `index.html?offline&autohost&bots=1&autostart&mode=pong` for Telur Pong against a bot, or `index.html?offline&autohost&bots=3&mode=kopi` for Kopi Tumpah against 3 bots. No network is used.
 
 ## Files
 
@@ -52,6 +62,8 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/engine.js` | Uncle Jack 21 (blackjack) rules and round flow. Runs on the host. |
 | `js/pong.js` | Telur Pong rules, turns and egg physics. Runs on the host. |
 | `js/pongview.js` | Telur Pong table view, flying eggs and swipe controls. |
+| `js/kopi.js` | Kopi Tumpah turns, secret spill point and bots. Runs on the host. |
+| `js/kopiview.js` | Kopi Tumpah glass, kettle, pouring and spills. |
 | `js/net.js` | Room codes and connections through the relay (MQTT). |
 | `js/config.js` | Which relay servers to use. |
 | `js/app.js` | Screens, rendering and animations. |
