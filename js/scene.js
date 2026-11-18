@@ -122,14 +122,20 @@
     L.stalls = [];
     const sw = 48, gap = 4;
     const right = L.counter ? L.counter.x - 4 : W - 2;
-    // fill from both edges inward so the side stalls stay visible around the game in the middle
-    let lx = 3, rx = right - sw;
-    ['nasi', 'roti', 'ckt', 'rojak', 'mee'].forEach((kind, i) => {
+    L.night = isNight();
+    // cashier counter on the far left (wider screens only; phones keep the space for a stall)
+    L.cashier = W >= 200 ? { x: 2, w: 36 } : null;
+    if (L.cashier) drawCashier(g, L.cashier);
+    // fill from both edges inward so the side stalls stay visible around the game in the middle;
+    // at night the burger and satay stalls take the best spots, the day stalls are shuttered
+    let lx = L.cashier ? L.cashier.x + L.cashier.w + 5 : 3, rx = right - sw;
+    const kinds = L.night ? ['burger', 'satay', 'nasi', 'roti', 'ckt', 'rojak', 'mee'] : ['nasi', 'roti', 'ckt', 'rojak', 'mee', 'burger', 'satay'];
+    kinds.forEach((kind, i) => {
       const left = i % 2 === 0;
       const x = left ? lx : rx;
       const clash = L.stalls.some(o => x < o.x + o.w + gap && x + sw + gap > o.x);
       if (x < 2 || x + sw > right || clash) return;
-      L.stalls.push({ kind, x, w: sw });
+      L.stalls.push({ kind, x, w: sw, closed: L.night ? !STALLS[kind].night : !!STALLS[kind].night });
       if (left) lx += sw + gap; else rx -= sw + gap;
     });
     for (const st of L.stalls) drawStall(g, st);
@@ -147,7 +153,43 @@
     roti: { lines: ['ROTI', 'CANAI'], sign: '#d97a1e', light: '#f09a3e', body: '#8a5a34', bodyD: '#6b4226', bodyL: '#a8703f', price: 'RM2', hawker: 'anneh', fx: 'flip' },
     mee: { lines: ['WANTAN', 'MEE'], sign: '#c0392b', light: '#d24a3a', body: '#b9c0c8', bodyD: '#8f979f', bodyL: '#dfe4e8', price: 'RM7', hawker: 'auntie', fx: 'steam', cart: true },
     rojak: { lines: ['ROJAK'], sign: '#7a2a5a', light: '#9a4a7a', body: '#8a5a34', bodyD: '#6b4226', bodyL: '#a8703f', price: 'RM6', hawker: 'ahboy', fx: null },
+    burger: { lines: ['BURGER', 'RAMLY'], sign: '#d42a2a', light: '#f6c744', body: '#c0392b', bodyD: '#8a2a1e', bodyL: '#e05a4a', price: 'RM6', hawker: 'rider', fx: 'griddle', cart: true, night: true },
+    satay: { lines: ['SATAY'], sign: '#2a2a2a', light: '#f6c744', body: '#8a5a34', bodyD: '#6b4226', bodyL: '#a8703f', price: 'RM1', hawker: 'makcik', fx: 'grill', night: true },
   };
+  function isNight() { return period() === 'night'; }
+
+  function drawCashier(g, c) {
+    const x = c.x, w = c.w, base = L.floor + 2, top = base - 18;
+    // BAYAR SINI board
+    const bt = 'BAYAR', bt2 = 'SINI', by = top - 36;
+    g.fillStyle = '#4a4a4a'; g.fillRect(x + 4, by + 13, 1, top - by - 13); g.fillRect(x + w - 5, by + 13, 1, top - by - 13);
+    g.fillStyle = '#2a1a12'; g.fillRect(x - 1, by - 1, w + 2, 15);
+    g.fillStyle = '#f6c744'; g.fillRect(x, by, w, 13);
+    ptext(g, bt, x + Math.round((w - tw(bt)) / 2), by + 1, '#2a1a12');
+    ptext(g, bt2, x + Math.round((w - tw(bt2)) / 2), by + 7, '#c0392b');
+    // desk
+    g.fillStyle = '#2a1a12'; g.fillRect(x, top - 1, w, base - top + 1);
+    g.fillStyle = '#6b4226'; g.fillRect(x + 1, top, w - 2, base - top - 1);
+    g.fillStyle = '#8a5a34'; g.fillRect(x + 1, top, w - 2, 2);
+    g.fillStyle = '#5a361f'; for (let i = x + 4; i < x + w - 2; i += 5) g.fillRect(i, top + 4, 1, base - top - 6);
+    // cash register + sweets jar
+    g.fillStyle = '#2a1a12'; g.fillRect(x + 4, top - 9, 16, 9);
+    g.fillStyle = '#9aa1ab'; g.fillRect(x + 5, top - 8, 14, 7);
+    g.fillStyle = '#1f3a2a'; g.fillRect(x + 6, top - 7, 9, 3);
+    g.fillStyle = '#4a4a4a'; for (let i = 0; i < 3; i++) g.fillRect(x + 6 + i * 3, top - 3, 2, 1);
+    g.fillStyle = '#2a1a12'; g.fillRect(x + w - 11, top - 8, 7, 8);
+    g.fillStyle = '#d6eef4'; g.fillRect(x + w - 10, top - 7, 5, 6);
+    g.fillStyle = '#f58ab0'; g.fillRect(x + w - 9, top - 4, 1, 1); g.fillStyle = '#f6c744'; g.fillRect(x + w - 7, top - 3, 1, 1); g.fillStyle = '#3fae6a'; g.fillRect(x + w - 8, top - 2, 1, 1);
+    c.top = top;
+  }
+  function drawCashierLife(t) {
+    const c = L.cashier; if (!c) return;
+    SPR.drawGrid(cx, SPR.avatarRows('auntie').slice(0, 12), SPR.AVATARS.auntie.pal, c.x + c.w - 26, c.top - 12 + (Math.floor(t * 1.5) % 2), 1);
+    cx.fillStyle = '#2a1a12'; cx.fillRect(c.x, c.top - 1, c.w, 1); cx.fillStyle = '#8a5a34'; cx.fillRect(c.x + 1, c.top, c.w - 2, 2);
+    cx.fillStyle = '#2a1a12'; cx.fillRect(c.x + 4, c.top - 9, 16, 1);
+    // register display blinks the total
+    if (Math.floor(t * 2) % 2) { cx.fillStyle = '#7cff9a'; cx.fillRect(c.x + 7, c.top - 6, 7, 1); }
+  }
   function drawStall(g, st) {
     const c = STALLS[st.kind];
     const x = st.x, w = st.w, base = L.floor + 2, ctop = base - 20, signH = 6 * c.lines.length + 4, signY = ctop - 22 - signH;
@@ -181,6 +223,13 @@
       for (let i = 0; i < 4; i++) R(6, 9 - i * 2, 14, 2, i % 2 ? '#e8c890' : '#d9a85a');
       R(24, 7, 8, 3, '#c97a2a'); R(23, 9, 10, 1, '#e8e2d0');
       R(w - 12, 6, 6, 4, '#fbf8f0'); R(w - 11, 7, 4, 2, '#7a3a1a');
+    } else if (st.kind === 'burger') {
+      for (let i = 0; i < 3; i++) { const px = 6 + i * 9; R(px, 4, 7, 2, '#e8a850'); R(px, 6, 7, 1, '#3f9a3a'); R(px, 7, 7, 1, '#6a3a1e'); R(px, 8, 7, 1, '#f2c84a'); R(px, 9, 7, 2, '#d9944a'); }
+      R(w - 12, 6, 6, 4, '#c0392b'); R(w - 11, 5, 4, 1, '#e8e2d0');
+    } else if (st.kind === 'satay') {
+      for (let i = 0; i < 6; i++) { const px = 6 + i * 3; R(px, 2, 1, 8, '#c9a26a'); R(px, 3, 1, 4, '#8a4a24'); }
+      R(26, 7, 8, 3, '#c97a2a'); R(25, 9, 10, 1, '#e8e2d0');
+      R(w - 12, 6, 3, 3, '#9ad04a'); R(w - 8, 6, 3, 3, '#e8e2d0');
     } else if (st.kind === 'rojak') {
       // fruit pieces + dark sauce
       const cols = ['#9ad04a', '#f2c84a', '#f58ab0', '#7ab83a', '#e8e2d0', '#f2c84a'];
@@ -200,17 +249,19 @@
   // after 7:30pm the hawkers go home: shutters down, signs dark, a TUTUP note
   function drawStallsClosed() {
     for (const st of L.stalls || []) {
+      if (!st.closed) continue;
       const x = st.x, w = st.w, base = L.floor + 2, top = st.ctop - 13;
       cx.fillStyle = '#2a1a12'; cx.fillRect(x - 1, top - 1, w + 2, base - top + 1);
       cx.fillStyle = '#8f979f'; cx.fillRect(x, top, w, base - top);
       cx.fillStyle = '#6f777f'; for (let y = top + 2; y < base; y += 3) cx.fillRect(x, y, w, 1);
       cx.fillStyle = '#b9c0c8'; cx.fillRect(x, top, w, 1);
       cx.fillStyle = '#4a4a4a'; cx.fillRect(x + Math.round(w / 2) - 3, base - 4, 6, 2);
-      // TUTUP note
-      const nw = tw('TUTUP') + 6, nx = x + Math.round((w - nw) / 2), ny = top + 4;
+      // TUTUP note (night stalls say when they open)
+      const note = STALLS[st.kind].night ? '7.30PM' : 'TUTUP';
+      const nw = tw(note) + 6, nx = x + Math.round((w - nw) / 2), ny = top + 4;
       cx.fillStyle = '#2a1a12'; cx.fillRect(nx - 1, ny - 1, nw + 2, 9);
       cx.fillStyle = '#fbf3dc'; cx.fillRect(nx, ny, nw, 7);
-      ptext(cx, 'TUTUP', nx + 3, ny + 1, '#c0392b');
+      ptext(cx, note, nx + 3, ny + 1, '#c0392b');
       // signboard lights off
       const signH = 6 * STALLS[st.kind].lines.length + 4, signY = st.ctop - 22 - signH;
       cx.fillStyle = 'rgba(10,8,20,.45)'; cx.fillRect(x - 1, signY - 1, w + 2, signH + 6);
@@ -218,6 +269,7 @@
   }
   function drawStallLife(t) {
     for (const st of L.stalls || []) {
+      if (st.closed) continue;
       const c = STALLS[st.kind];
       // hawker behind the counter
       const hx = st.x + Math.round(st.w * 0.55) - 8, hy = st.ctop - 15 + (Math.floor(t * 2 + st.x) % 2);
@@ -242,6 +294,21 @@
         cx.fillStyle = '#2a2a2a'; cx.fillRect(ax - 6, wy - 2, 12, 2); cx.fillRect(ax - 4, wy, 8, 1); cx.fillRect(ax + 6, wy - 3, 4, 1);
         cx.fillStyle = '#8a5028'; cx.fillRect(ax - 4, wy - 3, 7, 1);
         if (Math.sin(t * 5) > 0.2) { cx.fillStyle = 'rgba(90,90,90,.45)'; cx.fillRect(Math.round(ax + Math.sin(t * 2) * 3), wy - 6 - Math.floor(t * 8 % 6), 2, 2); }
+      } else if (c.fx === 'griddle') {
+        // flat griddle with sizzling patties, one being flipped
+        const gy = ay + 3;
+        cx.fillStyle = '#3a3a3a'; cx.fillRect(ax - 8, gy, 18, 2);
+        cx.fillStyle = '#6a3a1e'; cx.fillRect(ax - 6, gy - 1, 4, 1); cx.fillRect(ax + 3, gy - 1, 4, 1);
+        const k = (t * 0.9) % 1, up = Math.sin(Math.min(1, k * 2) * Math.PI) * 6;
+        cx.fillStyle = k < 0.5 ? '#8a4a24' : '#6a3a1e'; cx.fillRect(ax - 1, Math.round(gy - 1 - up), 4, 1);
+        for (let i = 0; i < 2; i++) { const kk = (t * 0.8 + i * 0.5) % 1; cx.fillStyle = `rgba(200,200,200,${(0.6 * (1 - kk)).toFixed(2)})`; cx.fillRect(Math.round(ax - 4 + i * 8 + Math.sin(t * 3 + i) * 2), Math.round(gy - 3 - kk * 12), 1, 2); }
+      } else if (c.fx === 'grill') {
+        // charcoal grill with satay sticks, glowing coals and smoke
+        const gy = ay + 3;
+        cx.fillStyle = '#2a2a2a'; cx.fillRect(ax - 9, gy, 20, 3);
+        for (let i = 0; i < 6; i++) { cx.fillStyle = Math.sin(t * 9 + i * 1.3) > 0 ? '#ff6a1e' : '#c0391e'; cx.fillRect(ax - 8 + i * 3, gy + 1, 2, 1); }
+        for (let i = 0; i < 5; i++) { cx.fillStyle = '#c9a26a'; cx.fillRect(ax - 8 + i * 4, gy - 1, 1, 1); cx.fillStyle = '#7a3a1a'; cx.fillRect(ax - 7 + i * 4, gy - 1, 2, 1); }
+        for (let i = 0; i < 3; i++) { const kk = (t * 0.6 + i / 3) % 1; cx.fillStyle = `rgba(180,180,180,${(0.55 * (1 - kk)).toFixed(2)})`; cx.fillRect(Math.round(ax - 3 + i * 4 + Math.sin(t * 2 + i) * 3), Math.round(gy - 2 - kk * 16), 2, 2); }
       } else if (c.fx === 'flip') {
         // roti being flipped
         const k = (t * 1.3) % 1, up = Math.sin(k * Math.PI) * 10;
@@ -384,7 +451,16 @@
     if (per !== 'night') { cx.fillStyle = 'rgba(255,255,255,.25)'; cx.fillRect(x + 2, y + 2, 1, h - 4); }
   }
 
+  function drawStallBulbs(t) {
+    for (const st of L.stalls || []) {
+      if (st.closed || !STALLS[st.kind].night) continue;
+      const bx = Math.round(st.x + st.w / 2), by = st.ctop - 30;
+      cx.fillStyle = '#2a1a12'; cx.fillRect(bx, by - 8, 1, 6);
+      cx.fillStyle = Math.sin(t * 13 + st.x) > 0.96 ? '#c9a36a' : '#fff2b0'; cx.fillRect(bx - 1, by - 2, 3, 3);
+    }
+  }
   function drawTubes(t, on) {
+    drawStallBulbs(t);
     for (const tx of L.tubes || []) {
       const y = L.ceil + 2, len = 26;
       cx.fillStyle = '#4a4a4a'; cx.fillRect(tx - len / 2 - 1, y - 2, 2, 3); cx.fillRect(tx + len / 2 - 1, y - 2, 2, 3);
@@ -397,6 +473,14 @@
     if (!on) return;
     cx.save();
     cx.globalCompositeOperation = 'lighter';
+    // bulbs over the night stalls that are open
+    for (const st of L.stalls || []) {
+      if (st.closed || !STALLS[st.kind].night) continue;
+      const bx = st.x + st.w / 2, by = st.ctop - 30;
+      const g = cx.createRadialGradient(bx, by, 1, bx, by + 10, 40);
+      g.addColorStop(0, 'rgba(255,210,120,.55)'); g.addColorStop(1, 'rgba(255,210,120,0)');
+      cx.fillStyle = g; cx.fillRect(st.x - 30, by - 30, st.w + 60, 80);
+    }
     for (const tx of L.tubes || []) {
       const g = cx.createRadialGradient(tx, L.ceil + 3, 2, tx, L.ceil + 30, Math.max(60, W * 0.35));
       g.addColorStop(0, 'rgba(255,248,220,.35)'); g.addColorStop(1, 'rgba(255,248,220,0)');
@@ -414,12 +498,13 @@
     const t = (now - t0) / 1000;
     cx.drawImage(bg, 0, 0);
     const per = period(), lights = per === 'evening' || per === 'night';
+    if ((per === 'night') !== L.night) layout();
     for (const win of L.windows || []) drawWindow(win, t, per);
     drawFan(Math.round(W * 0.18), t, W < 200 ? 12 : 18);
     drawFan(Math.round(W * 0.82), t + 0.4, W < 200 ? 12 : 18);
     drawClock(t);
     drawCicak(dt);
-    if (per === 'night') drawStallsClosed(); else drawStallLife(t);
+    drawStallsClosed(); drawStallLife(t); drawCashierLife(t);
     drawTehMan(t);
     drawCat(dt);
     // evening / night: the shop gets darker and the light tubes come on
