@@ -184,7 +184,7 @@
   }
   function drawCashierLife(t) {
     const c = L.cashier; if (!c) return;
-    SPR.drawGrid(cx, SPR.avatarRows('auntie').slice(0, 12), SPR.AVATARS.auntie.pal, c.x + c.w - 26, c.top - 12 + (Math.floor(t * 1.5) % 2), 1);
+    SPR.drawGrid(cx, SPR.avatarRows('kucing').slice(0, 12), SPR.AVATARS.kucing.pal, c.x + c.w - 26, c.top - 12 + (Math.floor(t * 1.5) % 2), 1);
     cx.fillStyle = '#2a1a12'; cx.fillRect(c.x, c.top - 1, c.w, 1); cx.fillStyle = '#8a5a34'; cx.fillRect(c.x + 1, c.top, c.w - 2, 2);
     cx.fillStyle = '#2a1a12'; cx.fillRect(c.x + 4, c.top - 9, 16, 1);
     // register display blinks the total
