@@ -29,8 +29,7 @@ A pixel-art multiplayer blackjack game set in a Malaysian kopitiam. You play wit
 
 - **The host's browser runs the table.** The host should keep that tab open and the screen on. The game asks the phone to stay awake, but if the host closes the tab, the table closes for everyone.
 - If a player refreshes the page or loses signal, they rejoin the same seat automatically.
-- Matchmaking uses the free PeerJS cloud server. After that, game data goes straight between the devices over WebRTC.
-- Some strict office or hotel Wi-Fi networks block peer-to-peer connections. If someone can't connect, they should switch to mobile data.
+- Messages go through a free public relay (MQTT over secure WebSocket: EMQX, with HiveMQ as backup). It works on any Wi-Fi or mobile data, and nobody needs an account. You can change the relay list in `js/config.js`.
 
 ## Testing alone
 
@@ -41,7 +40,8 @@ Open `index.html?offline&autohost&bots=4&autostart`. This starts a local table a
 | File | What it does |
 |---|---|
 | `js/engine.js` | Blackjack rules and round flow. Runs on the host. |
-| `js/net.js` | Room codes and peer-to-peer connections (PeerJS). |
+| `js/net.js` | Room codes and connections through the relay (MQTT). |
+| `js/config.js` | Which relay servers to use. |
 | `js/app.js` | Screens, rendering and animations. |
 | `js/scene.js` | Animated kopitiam background and the marble table. |
 | `js/sprites.js` | All pixel art, drawn in code. |

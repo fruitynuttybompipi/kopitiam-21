@@ -1,154 +1,186 @@
-/* Kopitiam 21 — peer-to-peer networking (PeerJS / WebRTC).
-   The host's browser runs the game; friends connect straight to it with a 4-letter code. */
+/* Kopitiam 21 — networking over a public MQTT relay (WebSocket on port 443-style TLS).
+   Works on any network, no account needed: every phone talks to the relay, not to each other.
+   The host's browser still runs the game; the relay only passes messages along. */
 (function (root) {
   'use strict';
-  const PREFIX = 'kopitiam21-';
-  const NET = {};
-
-  // ICE servers: public STUN + optional TURN relay from js/config.js
+  const NS = 'kopitiam21/v2/';
   const CFG = root.K21_CONFIG || {};
-  const STUN = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
-  const PEERJS_TURN = [
-    { urls: 'turn:eu-0.turn.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' },
-    { urls: 'turn:us-0.turn.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' },
-  ];
-  let icePromise = null;
-  function getIce() {
-    if (icePromise) return icePromise;
-    icePromise = (async () => {
-      let extra = Array.isArray(CFG.iceServers) ? CFG.iceServers.slice() : [];
-      if (CFG.turnCredentialsUrl) {
-        try {
-          const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 6000);
-          const r = await fetch(CFG.turnCredentialsUrl, { signal: ctl.signal });
-          clearTimeout(t);
-          const list = await r.json();
-          if (Array.isArray(list)) extra = extra.concat(list);
-        } catch (e) { console.warn('TURN credentials fetch failed', e); }
-      }
-      NET.hasRelay = extra.some(s => String(s.urls).indexOf('turn') >= 0);
-      return STUN.concat(extra, PEERJS_TURN);
-    })();
-    return icePromise;
-  }
-  // optional self-hosted PeerJS server: ?peerhost=example.com&peerport=443&peerpath=/
   const qs = new URLSearchParams(root.location.search);
-  const OPTS = { debug: 1 };
-  if (qs.get('peerhost')) Object.assign(OPTS, { host: qs.get('peerhost'), port: +qs.get('peerport') || 443, path: qs.get('peerpath') || '/', secure: qs.get('peersecure') !== '0' });
+  const BROKERS = qs.get('broker') ? [qs.get('broker')] : (CFG.brokers && CFG.brokers.length ? CFG.brokers : [
+    'wss://broker.emqx.io:8084/mqtt',
+    'wss://broker.hivemq.com:8884/mqtt',
+  ]);
+  const NET = {};
+  const T = code => ({
+    host: NS + code + '/host',   // retained "table is open" marker
+    toHost: NS + code + '/h',    // players -> host
+    all: NS + code + '/all',     // host -> everyone
+    to: pid => NS + code + '/c/' + pid, // host -> one player
+  });
+  const enc = o => JSON.stringify(o);
+  const dec = b => { try { return JSON.parse(typeof b === 'string' ? b : new TextDecoder().decode(b)); } catch (e) { return null; } };
+  const rid = () => Math.random().toString(36).slice(2, 10);
 
+  function connect(url, opts) {
+    return root.mqtt.connect(url, Object.assign({
+      clientId: 'k21_' + rid(), clean: true, keepalive: 20, reconnectPeriod: 2000, connectTimeout: 8000, protocolVersion: 4,
+    }, opts || {}));
+  }
+
+  // Connect to the first relay that answers.
+  function firstBroker(makeOpts, onClient, onFail) {
+    let i = 0;
+    const tryNext = () => {
+      if (i >= BROKERS.length) { onFail('network'); return; }
+      const url = BROKERS[i++];
+      const c = connect(url, makeOpts(url));
+      let ok = false;
+      const to = setTimeout(() => { if (!ok) { c.end(true); tryNext(); } }, 9000);
+      c.once('connect', () => { ok = true; clearTimeout(to); onClient(c, url); });
+      c.on('error', () => {});
+    };
+    tryNext();
+  }
+
+  // ---------- host ----------
   NET.host = function (code, h) {
-    let peer = null, closed = false;
-    const conns = new Map(); // pid -> DataConnection
+    let cl = null, t = T(code), closed = false;
+    const seen = new Map(); // pid -> last message time
     const api = {
       code,
-      broadcast(msg) { for (const c of conns.values()) if (c.open) { try { c.send(msg); } catch (e) {} } },
-      send(pid, msg) { const c = conns.get(pid); if (c && c.open) { try { c.send(msg); } catch (e) {} } },
+      broadcast(msg) { if (cl && cl.connected) cl.publish(t.all, enc(msg), { qos: 1 }); },
+      send(pid, msg) { if (cl && cl.connected) cl.publish(t.to(pid), enc(msg), { qos: 1 }); },
       close() {
         closed = true; clearInterval(hb);
-        for (const c of conns.values()) { try { c.close(); } catch (e) {} }
-        if (peer) peer.destroy();
+        if (cl) { try { cl.publish(t.all, enc({ t: 'closed' }), { qos: 1 }); cl.publish(t.host, '', { retain: true, qos: 1 }, () => cl.end()); } catch (e) {} setTimeout(() => { try { cl.end(true); } catch (e) {} }, 800); }
       },
     };
 
-    function create() {
-      peer = new root.Peer(PREFIX + api.code, Object.assign({ config: { iceServers: ice } }, OPTS));
-      peer.on('open', () => h.onReady(api.code));
-      peer.on('error', e => {
-        if (closed) return;
-        if (e.type === 'unavailable-id') { peer.destroy(); api.code = h.newCode(); create(); return; }
-        if (e.type === 'peer-unavailable') return;
-        h.onError(e.type || String(e));
-      });
-      peer.on('disconnected', () => {
-        // lost the signalling server; open games keep running, but new joins need it back
-        if (!closed) setTimeout(() => { try { if (!peer.destroyed) peer.reconnect(); } catch (e) {} }, 2000);
-      });
-      peer.on('connection', conn => {
-        let pid = null;
-        conn.on('data', m => {
-          if (!m || typeof m !== 'object') return;
-          conn._last = Date.now();
-          if (m.t === 'hello') {
-            const r = h.onHello(m);
-            if (!r || !r.ok) {
-              try { conn.send({ t: 'reject', reason: (r && r.reason) || 'Cannot join' }); } catch (e) {}
-              setTimeout(() => { try { conn.close(); } catch (e) {} }, 600);
-              return;
-            }
-            pid = m.pid;
-            const old = conns.get(pid);
-            if (old && old !== conn) { old._replaced = true; try { old.close(); } catch (e) {} }
-            conns.set(pid, conn);
-            h.onJoined(pid);
-            return;
-          }
-          if (!pid || m.t === 'pong') return;
-          h.onIntent(pid, m);
-        });
-        conn.on('close', () => {
-          if (pid && conns.get(pid) === conn) { conns.delete(pid); h.onLeave(pid); }
-        });
-        conn.on('error', () => {});
-      });
+    function open(c) {
+      cl = c;
+      // make sure nobody else is using this code
+      let taken = false;
+      const probe = (topic, payload) => { if (topic === t.host && payload && payload.length) { const m = dec(payload); if (m && m.open) taken = true; } };
+      cl.on('message', probe);
+      cl.subscribe(t.host, { qos: 1 });
+      setTimeout(() => {
+        cl.removeListener('message', probe);
+        cl.unsubscribe(t.host);
+        if (taken) {
+          // code in use: reconnect with a fresh code (the will must point at our own marker)
+          cl.end(true); cl = null;
+          api.code = code = h.newCode(); t = T(code);
+          firstBroker(() => ({ will: { topic: t.host, payload: '', retain: true, qos: 1 } }), open, e => h.onError(e));
+          return;
+        }
+        start();
+      }, 1200);
     }
-    let ice = null;
-    getIce().then(list => { ice = list; if (!closed) create(); });
-
-    // heartbeat: phones that sleep never send "close", so ping and drop silent ones
+    function announce() { cl.publish(t.host, enc({ open: true, ts: Date.now() }), { retain: true, qos: 1 }); }
+    function start() {
+      cl.subscribe(t.toHost, { qos: 1 }, err => {
+        if (err) { h.onError('subscribe'); return; }
+        announce();
+        h.onReady(code);
+      });
+      cl.on('message', (topic, payload) => {
+        if (topic !== t.toHost || closed) return;
+        const w = dec(payload); if (!w || !w.pid || !w.m) return;
+        const pid = String(w.pid).slice(0, 24), m = w.m;
+        if (m.t === 'bye') { if (seen.delete(pid)) h.onLeave(pid); return; }
+        if (m.t === 'hello') {
+          const r = h.onHello(Object.assign({}, m, { pid }));
+          if (!r || !r.ok) { api.send(pid, { t: 'reject', reason: (r && r.reason) || 'Cannot join' }); return; }
+          const fresh = !seen.has(pid);
+          seen.set(pid, Date.now());
+          api.send(pid, { t: 'welcome' });
+          if (fresh) h.onJoined(pid);
+          return;
+        }
+        if (!seen.has(pid)) return;
+        seen.set(pid, Date.now());
+        if (m.t === 'pong') return;
+        h.onIntent(pid, m);
+      });
+      cl.on('connect', () => { if (!closed) announce(); }); // after a reconnect
+      cl.on('offline', () => h.onStatus && h.onStatus('reconnecting'));
+      cl.on('reconnect', () => h.onStatus && h.onStatus('reconnecting'));
+      cl.on('connect', () => h.onStatus && h.onStatus(''));
+    }
+    // heartbeat: tell players we're alive, drop players who went silent
     const hb = setInterval(() => {
+      if (!cl || !cl.connected) return;
+      api.broadcast({ t: 'ping' });
       const now = Date.now();
-      for (const [pid, c] of conns) {
-        if (now - (c._last || now) > 20000) { conns.delete(pid); try { c.close(); } catch (e) {} h.onLeave(pid); }
-        else if (c.open) { try { c.send({ t: 'ping' }); } catch (e) {} }
-      }
+      for (const [pid, last] of seen) if (now - last > 25000) { seen.delete(pid); h.onLeave(pid); }
     }, 4000);
+
+    firstBroker(() => ({ will: { topic: t.host, payload: '', retain: true, qos: 1 } }), open, e => h.onError(e));
     return api;
   };
 
-  NET.join = function (code, h) {
-    let peer = null, conn = null, closed = false, everOpen = false, tries = 0, retrying = false, lastMsg = Date.now();
+  // ---------- player ----------
+  NET.join = function (code, h, pid) {
+    const t = T(code);
+    let cl = null, closed = false, everOpen = false, welcomed = false, lastHost = Date.now(), goneTimer = null;
     const api = {
-      send(m) { if (conn && conn.open) { try { conn.send(m); } catch (e) {} } },
-      close() { closed = true; clearInterval(wd); clearTimeout(firstTO); try { conn && conn.close(); } catch (e) {} if (peer) peer.destroy(); },
+      send(m) { if (cl && cl.connected) cl.publish(t.toHost, enc({ pid, m }), { qos: 1 }); },
+      close() {
+        closed = true; clearInterval(wd); clearTimeout(firstTO); clearTimeout(goneTimer);
+        if (cl) { try { api.send({ t: 'bye' }); } catch (e) {} setTimeout(() => { try { cl.end(true); } catch (e) {} }, 300); }
+      },
     };
     function fail(why) { if (closed) return; h.onError(why); api.close(); }
-    function retry() {
-      if (closed || retrying) return;
-      retrying = true; tries++;
-      h.onStatus('reconnecting');
-      if (tries > 15) { fail('lost'); return; }
-      try { conn && conn.close(); } catch (e) {}
-      setTimeout(() => { retrying = false; if (!closed) connect(); }, Math.min(800 * tries, 4000));
-    }
-    function openConn() {
-      conn = peer.connect(PREFIX + code, { reliable: true });
-      const c = conn;
-      c.on('open', () => { everOpen = true; tries = 0; lastMsg = Date.now(); clearTimeout(firstTO); h.onStatus(''); h.onOpen(); });
-      c.on('data', m => {
-        lastMsg = Date.now();
-        if (m && m.t === 'ping') { try { c.send({ t: 'pong' }); } catch (e) {} return; }
+    const brokers = BROKERS.slice();
+    function tryBroker(i) {
+      if (closed) return;
+      if (i >= brokers.length) { fail(everOpen ? 'lost' : sawBroker ? 'notfound' : 'network'); return; }
+      const c = connect(brokers[i], { will: { topic: t.toHost, payload: enc({ pid, m: { t: 'bye' } }), qos: 1 } });
+      let found = false, connected = false;
+      const to = setTimeout(() => { if (!found) { c.end(true); tryBroker(i + 1); } }, 9000);
+      c.on('error', () => {});
+      c.once('connect', () => {
+        connected = true; sawBroker = true;
+        c.subscribe([t.host, t.all, t.to(pid)], { qos: 1 });
+      });
+      c.on('message', (topic, payload) => {
+        if (closed) return;
+        if (topic === t.host) {
+          const m = payload && payload.length ? dec(payload) : null;
+          if (m && m.open) {
+            lastHost = Date.now(); clearTimeout(goneTimer); goneTimer = null;
+            if (!found) { found = true; clearTimeout(to); cl = c; hello(); }
+          } else if (found && everOpen && !goneTimer) {
+            // host vanished; give it a moment to come back
+            h.onStatus('reconnecting');
+            goneTimer = setTimeout(() => fail('lost'), 15000);
+          } else if (!found) {
+            clearTimeout(to); c.end(true); tryBroker(i + 1);
+          }
+          return;
+        }
+        if (c !== cl) return;
+        const m = dec(payload); if (!m) return;
+        lastHost = Date.now();
+        if (goneTimer) { clearTimeout(goneTimer); goneTimer = null; h.onStatus(''); }
+        if (m.t === 'ping') { api.send({ t: 'pong' }); return; }
+        if (m.t === 'closed') { fail('lost'); return; }
+        if (m.t === 'welcome') { welcomed = true; if (!everOpen) { everOpen = true; clearTimeout(firstTO); } h.onStatus(''); return; }
         h.onMsg(m);
       });
-      c.on('close', () => { if (c === conn && !closed) retry(); });
-      c.on('error', () => {});
+      // no retained "open" marker shows up -> no table on this relay
+      c.once('connect', () => setTimeout(() => { if (!found && !closed) { clearTimeout(to); c.end(true); tryBroker(i + 1); } }, 3500));
+      c.on('offline', () => { if (c === cl && !closed) h.onStatus('reconnecting'); });
+      c.on('connect', () => { if (c === cl && !closed && everOpen) hello(); }); // re-join after a blip
     }
-    function connect() {
-      if (peer && !peer.destroyed && peer.open) { openConn(); return; }
-      if (peer) { try { peer.destroy(); } catch (e) {} }
-      peer = new root.Peer(Object.assign({ config: { iceServers: ice } }, OPTS));
-      peer.on('open', openConn);
-      peer.on('error', e => {
-        if (closed) return;
-        if (e.type === 'peer-unavailable') { if (!everOpen) fail('notfound'); else if (tries >= 2) fail('lost'); else retry(); return; }
-        if (e.type === 'browser-incompatible') { fail('browser'); return; }
-        retry();
-      });
-      peer.on('disconnected', () => { if (!closed) { try { peer.reconnect(); } catch (e) {} } });
-    }
-    let ice = null;
-    getIce().then(list => { ice = list; if (!closed) connect(); });
-    const firstTO = setTimeout(() => { if (!everOpen) fail('timeout'); }, 30000);
-    const wd = setInterval(() => { if (everOpen && !closed && !retrying && Date.now() - lastMsg > 11000) retry(); }, 2000);
+    let sawBroker = false;
+    function hello() { h.onOpen(); }
+    tryBroker(0);
+    const firstTO = setTimeout(() => { if (!everOpen) fail(sawBroker ? 'timeout' : 'network'); }, 25000);
+    const wd = setInterval(() => {
+      if (!everOpen || closed) return;
+      if (Date.now() - lastHost > 20000 && !goneTimer) { h.onStatus('reconnecting'); goneTimer = setTimeout(() => fail('lost'), 12000); }
+    }, 3000);
     return api;
   };
 

@@ -184,7 +184,7 @@
       onError: e => {
         if (G && G.code) { setStatus('Signal lost — friends may not be able to join', 4000); return; }
         leaveGame(true);
-        alertBox('Cannot open table', 'Connection to the matchmaking server failed (' + esc(e) + '). Check your internet and try again.');
+        alertBox('Cannot open table', 'Cannot reach the game server. Check your internet connection and try again.');
       },
       onHello: m => {
         if (!m.pid || m.pid === me.id) return { ok: false, reason: 'Invalid player' };
@@ -192,6 +192,7 @@
       },
       onJoined: () => {},
       onIntent: (p, m) => table.handle(p, m),
+      onStatus: st => setStatus(st === 'reconnecting' ? 'Connection lost... reconnecting' : ''),
       onLeave: p => table.disconnect(p),
     });
   }
@@ -230,13 +231,14 @@
       onError: e => {
         const msg = e === 'notfound' ? 'Meja <b>' + esc(code) + '</b> not found. Check the code, or ask the host to open the table again.'
           : e === 'lost' ? 'Host tutup kedai — the table closed or the connection was lost.'
-            : e === 'timeout' ? 'Cannot reach the host\'s phone. Try both on the same Wi-Fi.' + (NET.hasRelay ? '' : '<br><small>Host: add a free TURN relay in js/config.js so mobile data works.</small>')
+            : e === 'timeout' ? 'The table is open but the host is not answering. Ask the host to keep the game screen open, then try again.'
+              : e === 'network' ? 'Cannot reach the game server. Check your internet connection and try again.'
               : e === 'browser' ? 'This browser cannot play online. Try Chrome or Safari.'
                 : 'Connection error: ' + esc(e);
         leaveGame(true);
         alertBox('Alamak!', msg);
       },
-    });
+    }, me.id);
   }
 
   function send(m) {
