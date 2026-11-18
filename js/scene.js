@@ -108,11 +108,76 @@
       ptext(g, 'TEH TARIK', cx0 + 4, ct + 7, '#f6c744');
       L.counter = { x: cx0, top: ct - 3, w: cw };
     } else L.counter = null;
+    // hawker stalls along the back wall
+    L.stalls = [];
+    const sw = 58;
+    const right = L.counter ? L.counter.x - 6 : W - 4;
+    L.stalls.push({ kind: 'nasi', x: 4, w: sw });
+    if (right - sw > 4 + sw + 8) L.stalls.push({ kind: 'mee', x: right - sw, w: sw });
+    for (const st of L.stalls) drawStall(g, st);
     // warm light
     const grd = g.createRadialGradient(W / 2, 0, 2, W / 2, 0, W * 0.8);
     grd.addColorStop(0, 'rgba(255,220,140,.18)'); grd.addColorStop(1, 'rgba(60,30,10,.18)');
     g.fillStyle = grd; g.fillRect(0, 0, W, H);
     return c;
+  }
+
+  // ---------- hawker stalls ----------
+  function drawStall(g, st) {
+    const nasi = st.kind === 'nasi';
+    const x = st.x, w = st.w, base = L.floor + 2, ctop = base - 20, signY = ctop - 30;
+    st.ctop = ctop; st.signY = signY;
+    // poles + signboard
+    g.fillStyle = '#4a4a4a'; g.fillRect(x + 2, signY + 10, 2, ctop - signY - 10); g.fillRect(x + w - 4, signY + 10, 2, ctop - signY - 10);
+    g.fillStyle = '#2a1a12'; g.fillRect(x - 1, signY - 1, w + 2, 12);
+    g.fillStyle = nasi ? '#2f8a5f' : '#c0392b'; g.fillRect(x, signY, w, 10);
+    g.fillStyle = nasi ? '#3fae6a' : '#d24a3a'; g.fillRect(x, signY, w, 1);
+    const label = nasi ? 'NASI LEMAK' : 'WANTAN MEE';
+    ptext(g, label, x + Math.round((w - tw(label)) / 2), signY + 3, '#f6c744');
+    // awning stripes
+    for (let i = 0; i < w; i += 6) { g.fillStyle = (i / 6) % 2 ? '#fbf3dc' : (nasi ? '#2f8a5f' : '#c0392b'); g.fillRect(x + i, signY + 11, Math.min(6, w - i), 3); }
+    // glass display case
+    const gy = ctop - 12;
+    g.fillStyle = '#2a1a12'; g.fillRect(x + 3, gy - 1, w - 6, 13);
+    g.fillStyle = '#d6eef4'; g.fillRect(x + 4, gy, w - 8, 11);
+    if (nasi) {
+      // banana-leaf packets, sambal, eggs
+      for (let i = 0; i < 5; i++) { const px = x + 7 + i * 7, py = gy + 4; g.fillStyle = '#2a6b2a'; g.fillRect(px, py + 2, 6, 4); g.fillRect(px + 1, py + 1, 4, 1); g.fillRect(px + 2, py, 2, 1); g.fillStyle = '#3f9a3a'; g.fillRect(px + 1, py + 3, 2, 2); }
+      g.fillStyle = '#c0392b'; g.fillRect(x + w - 16, gy + 6, 8, 4); g.fillStyle = '#e8e2d0'; g.fillRect(x + w - 17, gy + 9, 10, 1);
+      g.fillStyle = '#fff8ea'; g.fillRect(x + w - 8, gy + 5, 3, 4); g.fillStyle = '#f2b81e'; g.fillRect(x + w - 7, gy + 6, 1, 2);
+    } else {
+      // hanging noodles + char siu, bowls
+      for (let i = 0; i < 4; i++) { const px = x + 7 + i * 6; g.fillStyle = '#e8c35a'; g.fillRect(px, gy + 1, 3, 7); g.fillStyle = '#c9a23e'; g.fillRect(px + 1, gy + 2, 1, 6); }
+      for (let i = 0; i < 3; i++) { const px = x + 33 + i * 5; g.fillStyle = '#b8322a'; g.fillRect(px, gy + 1, 3, 6); g.fillStyle = '#7a1f17'; g.fillRect(px, gy + 6, 3, 1); }
+      g.fillStyle = '#fbf8f0'; g.fillRect(x + w - 14, gy + 8, 8, 3); g.fillStyle = '#3fae6a'; g.fillRect(x + w - 14, gy + 9, 8, 1);
+    }
+    g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(x + 5, gy + 1, 1, 9);
+    // counter / cart body
+    g.fillStyle = '#2a1a12'; g.fillRect(x, ctop - 1, w, base - ctop + 1);
+    g.fillStyle = nasi ? '#8a5a34' : '#b9c0c8'; g.fillRect(x + 1, ctop, w - 2, base - ctop - 1);
+    g.fillStyle = nasi ? '#6b4226' : '#8f979f'; for (let i = x + 4; i < x + w - 2; i += 6) g.fillRect(i, ctop + 2, 1, base - ctop - 4);
+    g.fillStyle = nasi ? '#a8703f' : '#dfe4e8'; g.fillRect(x + 1, ctop, w - 2, 1);
+    const tag = nasi ? 'RM5' : 'RM7';
+    g.fillStyle = '#fbf3dc'; g.fillRect(x + w - tw(tag) - 7, ctop + 4, tw(tag) + 4, 7);
+    ptext(g, tag, x + w - tw(tag) - 5, ctop + 5, '#c0392b');
+    if (!nasi) { g.fillStyle = '#2a1a12'; g.fillRect(x + 6, base - 2, 6, 4); g.fillRect(x + w - 12, base - 2, 6, 4); }
+  }
+  function drawStallLife(t) {
+    for (const st of L.stalls || []) {
+      const nasi = st.kind === 'nasi';
+      // hawker behind the counter
+      const id = nasi ? 'makcik' : 'ahpek';
+      const hx = st.x + Math.round(st.w * (nasi ? 0.3 : 0.62)) - 8, hy = st.ctop - 15 + (Math.floor(t * 2 + st.x) % 2);
+      SPR.drawGrid(cx, SPR.avatarRows(id).slice(0, 13), SPR.AVATARS[id].pal, hx, hy, 1);
+      // redraw display case top edge over the hawker's body
+      cx.fillStyle = '#2a1a12'; cx.fillRect(st.x + 3, st.ctop - 13, st.w - 6, 1);
+      // steam from the noodle pot / rice
+      for (let i = 0; i < 3; i++) {
+        const k = ((t * 0.7 + i / 3) % 1);
+        cx.fillStyle = `rgba(255,255,255,${(0.7 * (1 - k)).toFixed(2)})`;
+        cx.fillRect(Math.round(st.x + st.w * (nasi ? 0.75 : 0.25) + Math.sin(t * 3 + i) * 2), Math.round(st.ctop - 14 - k * 14), 1, 2);
+      }
+    }
   }
 
   function drawFan(x, t, len) {
@@ -203,6 +268,7 @@
     drawFan(Math.round(W * 0.82), t + 0.4, W < 200 ? 12 : 18);
     drawClock(t);
     drawCicak(dt);
+    drawStallLife(t);
     drawTehMan(t);
     drawCat(dt);
   }

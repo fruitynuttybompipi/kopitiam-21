@@ -32,7 +32,7 @@ Pick **TELUR PONG** on the first screen before tapping BUKA MEJA.
 Pick **KOPI TUMPAH** on the first screen before tapping BUKA MEJA.
 
 - Everyone takes turns pouring kopi into the same glass. **Press and hold TUANG** (or the space bar) to pour; the longer you hold, the faster it pours. A few drops still fall after you let go.
-- Each turn you must pour at least up to the yellow line. You have 10 seconds, or the kettle pours the minimum for you.
+- Any pour counts, even a single drip. Each new cup starts part-full. You have 10 seconds, or the kettle drips a little for you.
 - The kopi can bulge above the rim, but the real spill point is secret and changes every cup.
 - Whoever makes it **tumpah** is out and belanja kopi. A new cup starts, and the last player left wins.
 - When the game ends, the host can tap **MAIN LAGI** to play again, and anyone can tap **MAIN MENU** to go back to the first screen.

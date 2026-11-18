@@ -108,13 +108,20 @@
       cx.fillStyle = '#c8915a'; cx.fillRect(Math.round(gx - hw) - 1, g.top - 5, Math.round(hw * 2) + 2, 1);
       if (Math.random() < 0.6) parts.push({ x: gx + (Math.random() < 0.5 ? -1 : 1) * (hw + 2), y: g.top + Math.random() * g.gh, vx: 0, vy: 1, g: 0.1, c: '#6b3a1c', s: 1, life: 12 });
     }
-    // min line for this turn
-    if (st.phase === 'pour' && st.turn && !spilling) {
-      const ml = Math.min(1.0, st.turn.start + st.turn.min);
-      const y = Math.round(g.bot - g.base - ml * (innerH - 1));
-      const hw = halfAt(g, y) - g.wall;
-      for (let x = Math.round(gx - hw); x < gx + hw; x += 3) { cx.fillStyle = '#f6c744'; cx.fillRect(x, y, 2, 1); }
-      if (lv < ml) { cx.fillStyle = '#f6c744'; cx.fillRect(Math.round(gx + hw + 3), y - 1, 3, 3); }
+    // KOPITIAM 21 logo printed on the glass
+    if (root.Scene && g.gw >= 40) {
+      const ly = Math.round(g.top + g.gh * 0.64), sc = g.gw >= 80 ? 2 : 1;
+      cx.globalAlpha = 0.62; // printed on glass: the kopi level shows through
+      const t1 = 'KOPITIAM', t2 = '21';
+      const w1 = root.Scene.tw(t1, sc), w2 = root.Scene.tw(t2, sc * 2);
+      const bw = w1 + 6 * sc, bh = 5 * sc + 5 * sc * 2 + 8 * sc;
+      const bx = Math.round(gx - bw / 2), by = ly - Math.round(bh / 2);
+      cx.fillStyle = 'rgba(42,26,18,.9)'; cx.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+      cx.fillStyle = 'rgba(192,57,43,.95)'; cx.fillRect(bx, by, bw, bh);
+      cx.fillStyle = 'rgba(246,199,68,.95)'; cx.fillRect(bx + sc, by + sc, bw - 2 * sc, sc);
+      root.Scene.ptext(cx, t1, bx + 3 * sc, by + 3 * sc, '#f6c744', sc);
+      root.Scene.ptext(cx, t2, Math.round(gx - w2 / 2), by + 5 * sc + 5 * sc, '#ffffff', sc * 2);
+      cx.globalAlpha = 1;
     }
     // glass walls, rim, base, handle
     for (let y = g.top; y < g.bot; y++) {
@@ -205,7 +212,7 @@
       if (local.dripLeft <= 1e-6) { local.dripLeft = 0; send(true); }
     }
     if (local && local.active && now - local.lastSend > 100) { local.lastSend = now; send(false); }
-    if (local && KV.onLocal) KV.onLocal(local.level - tr.start >= tr.min, local.level);
+    if (local && KV.onLocal) KV.onLocal(local.level - tr.start > 0.0005, local.level);
   }
   function send(done) { if (local && onLevel) onLevel({ t: 'lvl', id: local.turnId, v: +local.level.toFixed(4), done }); }
 

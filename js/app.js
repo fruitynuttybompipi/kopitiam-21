@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v8';
+  const VERSION = 'v9';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -1146,7 +1146,7 @@
       html = `<div class="ctl-info"><b>${esc(w ? w.name : '?')}</b> MENANG! Semua lain belanja kopi.</div>
         <div class="ctl-row">${host ? '<button class="btn red big" data-act="newGame">MAIN LAGI<small>Restart</small></button>' : ''}<button class="btn big" data-act="menu">MAIN MENU<small>${host ? 'Close table' : 'Leave table'}</small></button></div>`;
     } else if (mine) {
-      html = `<div class="ctl-info" id="kopiMsg">Tuang sampai <b>garisan kuning</b>, then let go!</div>
+      html = `<div class="ctl-info" id="kopiMsg">Your turn — <b>even one drop</b> counts!</div>
         <div class="ctl-row"><button class="btn green big hold" data-hold="1">TUANG!<small>Tekan &amp; tahan · hold to pour</small></button></div>`;
     } else if (ph === 'spill') {
       const l = s.players.find(p => p.id === s.loser);
@@ -1207,10 +1207,11 @@
         <ul>
           <li>Everyone takes turns pouring kopi into <b>the same cup</b>.</li>
           <li><b>Press and hold</b> TUANG (or the cup) to pour. The longer you hold, the faster the kettle pours. Let go to stop — a few drops still fall after.</li>
-          <li>Each turn you must pour at least up to the <b>yellow line</b>.</li>
+          <li>Any pour counts — <b>even one drip</b>. A tap is enough to pass your turn.</li>
+          <li>Every new cup starts part-full. Uncle already poured some!</li>
           <li>The kopi can bulge a little above the rim, but the real spill point is <b>secret</b> and different every cup.</li>
           <li>Whoever makes it <b>tumpah</b> is out and <b>belanja kopi</b>! A new cup starts. Last player standing wins.</li>
-          <li>10 seconds per turn, or the kettle pours the minimum for you.</li>
+          <li>10 seconds per turn, or the kettle drips a little for you.</li>
         </ul>
         <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
       return;
@@ -1332,7 +1333,7 @@
   KV.mount($('#kopiCanvas'), { onLevel: m => send(m) });
   KV.onLocal = (ok) => {
     const m = $('#kopiMsg'); if (!m) return;
-    const html = ok ? '<b>OK!</b> Lepas bila-bila — or risk a bit more...' : 'Tuang sampai <b>garisan kuning</b>, then let go!';
+    const html = ok ? '<b>OK!</b> Lepas bila-bila — or risk a bit more...' : 'Your turn — <b>even one drop</b> counts!';
     if (m._h !== html) { m._h = html; m.innerHTML = html; }
   };
   // hold-to-pour button (pointer + space bar)

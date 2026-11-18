@@ -5,7 +5,7 @@
   'use strict';
 
   // pour speed (cup per second) after holding for t seconds: the kettle tips further the longer you hold
-  function rate(t) { return 0.06 + 0.32 * Math.pow(Math.min(1, t / 1.2), 2); }
+  function rate(t) { return 0.045 + 0.24 * Math.pow(Math.min(1, t / 1.4), 2); }
   // extra kopi that still drips out after letting go
   function drip(holdT, rnd) { return rate(holdT) * 0.1 + 0.004 + rnd * 0.008; }
   // how long to hold to pour `amount` (approx, ignoring drip)
@@ -105,13 +105,14 @@
     }
     newCup() {
       const S = this.s;
-      S.cupNo++; S.level = 0; S.loser = null;
+      S.cupNo++; S.loser = null;
+      S.level = Math.round((0.5 + this.rng() * 0.2) * 1000) / 1000; // uncle already filled it part way
       this.T = 1.0 + this.rng() * 0.12; // between the brim and a fat bulge
     }
     beginTurn(pid) {
       const S = this.s;
       S.phase = 'pour';
-      S.turn = { id: (S.turn ? S.turn.id : 0) + 1, pid, start: S.level, min: Math.round((0.035 + this.rng() * 0.03) * 1000) / 1000, pouring: false };
+      S.turn = { id: (S.turn ? S.turn.id : 0) + 1, pid, start: S.level, min: 0.001, pouring: false }; // any pour counts, even one drip
       this.fx({ type: 'turn', pid });
       this.setTimer('pour', S.settings.turnTime, () => this.timeout());
       const pl = this.p(pid);
@@ -232,11 +233,11 @@
       if (S.phase !== 'pour' || !tr || tr.pid !== pid) return;
       const room = 1.0 - S.level;
       let amt;
-      if (room > 0.35) amt = tr.min + this.rng() * 0.2;
-      else if (room > 0.15) amt = tr.min + this.rng() * 0.06;
-      else amt = tr.min + this.rng() * 0.01;
-      this.say(pid, amt > 0.15 ? 'pourBig' : 'pourSmall');
-      this.hostPour(pid, amt - 0.012);
+      if (room > 0.3) amt = 0.03 + this.rng() * 0.15;
+      else if (room > 0.12) amt = 0.01 + this.rng() * 0.05;
+      else amt = this.rng() * 0.015;
+      this.say(pid, amt > 0.12 ? 'pourBig' : 'pourSmall');
+      this.hostPour(pid, Math.max(0.002, amt - 0.01));
     }
 
     handle(id, m) {
