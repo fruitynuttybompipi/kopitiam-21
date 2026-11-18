@@ -1,6 +1,6 @@
-# Kopitiam 21 · Uncle Jack 21, Telur Pong, Kopi Tumpah & Ingat Order
+# Kopitiam 21 · 5 kopitiam games
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with four games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah** and **Ingat Order**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with five games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order** and **Cari Telur**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -47,6 +47,16 @@ Pick **INGAT ORDER** on the first screen before tapping BUKA MEJA. You can also 
 - Tables get harder: 1 customer at table 1, up to 4 at tables 4–5. From table 3 someone may shout "tambah satu...", and at table 5 someone also changes (tukar) their order.
 - Scoring: +10 per right item, −5 per wrong or extra item, +20 for a perfect table. The final ranking shows each player's points and perfect tables.
 
+## Cari Telur (1–6 players)
+
+Pick **CARI TELUR** on the first screen before tapping BUKA MEJA. You can also play alone.
+
+- Watch the egg go under one of the pink bowls, then follow it while the bowls shuffle.
+- Everyone picks at the same time by tapping a bowl (10 seconds). Nobody sees the other picks until the reveal.
+- A right pick scores 100 points, plus up to 50 for picking fast. Nobody is knocked out.
+- 10 levels: 3 bowls at first, then 4, 5 and finally 6 bowls, faster each level. From level 6 some bowls jump over others and some swaps are fakes.
+- The next level starts by itself after the reveal; the host can tap NEXT to skip ahead.
+
 ## Uncle Jack 21 house rules
 
 - Everyone starts with **1000 chips**. These are play chips only, with no real money.
@@ -76,6 +86,8 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/kopiview.js` | Kopi Tumpah glass, kettle, pouring and spills. |
 | `js/order.js` | Ingat Order menu, order generator, turns and scoring. Runs on the host. |
 | `js/orderview.js` | Ingat Order customers, speech bubbles, tablet and food/drink icons. |
+| `js/egg.js` | Cari Telur levels, shuffle scripts and scoring. Runs on the host. |
+| `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
 | `js/net.js` | Room codes and connections through the relay (MQTT). |
 | `js/config.js` | Which relay servers to use. |
 | `js/app.js` | Screens, rendering and animations. |

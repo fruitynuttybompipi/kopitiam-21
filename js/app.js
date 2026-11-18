@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v13';
+  const VERSION = 'v14';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -182,7 +182,7 @@
 
   function startHost() {
     newSession('host');
-    const Engine = me.mode === 'pong' ? PONG.Table : me.mode === 'kopi' ? KOPI.Table : me.mode === 'order' ? ORDER.Table : BJ.Table;
+    const Engine = { pong: PONG.Table, kopi: KOPI.Table, order: ORDER.Table, egg: EGG.Table }[me.mode] || BJ.Table;
     const table = new Engine({
       hostId: me.id,
       onChange: flush,
@@ -325,6 +325,19 @@
     if (s.code) { G.code = s.code; $('#codeTxt').textContent = s.code; }
     const meP = s.players.find(p => p.id === me.id);
     G.isHost = s.hostId === me.id;
+    if (s.game === 'egg') {
+      $('#btnHost').classList.add('hidden');
+      setView('egg');
+      EV.render(s, me.id);
+      renderEggHud(s);
+      renderTimer(s, meP);
+      renderEggControls(s, meP);
+      renderTicker(s);
+      $('#game').classList.toggle('myturn', s.phase === 'pick' && !(s.picked || []).includes(me.id));
+      if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showEggResult, 1600);
+      firstRender = false;
+      return;
+    }
     if (s.game === 'order') {
       $('#btnHost').classList.add('hidden');
       setView('order');
@@ -606,6 +619,12 @@
     const t = s.timer;
     if (!t) { G.timer = null; bar.classList.remove('on'); return; }
     if (!G.timer || G.timer.id !== t.id) G.timer = { id: t.id, end: performance.now() + t.left, total: t.total || 1 };
+    if (s.game === 'egg') {
+      setText($('#timerLbl'), t.kind === 'pick' ? ((s.picked || []).includes(me.id) ? 'WAITING OTHERS...' : 'PICK A BOWL!') : 'NEXT LEVEL IN');
+      G.timer.mine = t.kind === 'pick' && !(s.picked || []).includes(me.id);
+      bar.classList.add('on');
+      return;
+    }
     if (s.game === 'order') {
       const mine = s.cur === me.id, cn = s.cur ? nameOf(s.cur).toUpperCase() : '';
       setText($('#timerLbl'), t.kind === 'show' ? (mine ? 'DENGAR! LISTEN UP' : cn + ' LISTENING...') : t.kind === 'answer' ? (mine ? 'KEY IN THE ORDER!' : cn + ' KEYING IN...') : 'NEXT TABLE IN');
@@ -793,7 +812,7 @@
       case 'addBot': AU.play('pop'); send({ t: 'addBot' }); return;
       case 'hostMenu': showHostMenu(); return;
       case 'newGame': send({ t: 'newGame' }); closeOverlay(); return;
-      case 'results': if (G.state && G.state.game === 'order') showOrderResult(); else showPodium(); return;
+      case 'results': if (G.state && G.state.game === 'order') showOrderResult(); else if (G.state && G.state.game === 'egg') showEggResult(); else showPodium(); return;
       case 'submitOrder': AU.play('chip'); send({ t: 'chit', items: OV.chitNow() }); send({ t: 'submit' }); return;
       case 'menu': confirmLeave(); return;
     }
@@ -805,6 +824,7 @@
     if (G.state.game === 'pong') return $$('#pongView .ph-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'kopi') return $$('#kopiView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'order') return $$('#orderView .kp-card').find(c => c.dataset.pid === pid) || null;
+    if (G.state.game === 'egg') return $$('#eggView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (pid === G.state.taukeId) return $('.tk-who');
     return seatEls.get(pid) || null;
   }
@@ -815,6 +835,7 @@
     if (G.state && G.state.game === 'pong') { pongFx(f); return; }
     if (G.state && G.state.game === 'kopi') { kopiFx(f); return; }
     if (G.state && G.state.game === 'order') { orderFx(f); return; }
+    if (G.state && G.state.game === 'egg') { eggFx(f); return; }
     switch (f.type) {
       case 'say': bubble(f.pid, f.text, f.mood); break;
       case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
@@ -1008,11 +1029,13 @@
   // =============== TELUR PONG ===============
   function setPongMode(on) { setView(on ? 'pong' : 'bj'); }
   function setView(v) {
-    $('#banner').classList.toggle('low', v !== 'bj');
+    $('#banner').classList.toggle('low', v !== 'bj' && v !== 'egg');
     $('#table').classList.toggle('hidden', v !== 'bj');
     $('#pongView').classList.toggle('hidden', v !== 'pong');
     $('#kopiView').classList.toggle('hidden', v !== 'kopi');
     $('#orderView').classList.toggle('hidden', v !== 'order');
+    $('#eggView').classList.toggle('hidden', v !== 'egg');
+    if (EV.visible !== (v === 'egg')) { EV.visible = v === 'egg'; EV.show(EV.visible); }
     if (v !== 'order' && OV.active) { OV.active = false; OV.reset(); }
     if (v === 'order') OV.active = true;
     if (PV.visible !== (v === 'pong')) { PV.visible = v === 'pong'; PV.show(PV.visible); }
@@ -1128,6 +1151,68 @@
       <div class="podium">${pd(l, 1)}${pd(w, 0)}</div>
       <p style="text-align:center">Score so far: ${s.players.map(p => esc(p.name) + ' ' + (p.wins || 0)).join(' · ')}</p>
       <div class="row"><button class="btn" data-h="close">CLOSE</button>${G.isHost ? '<button class="btn red" data-h="newGame">REMATCH</button>' : ''}</div></div>`, 'podium');
+    confetti();
+  }
+
+  // =============== CARI TELUR ===============
+  function renderEggHud(s) {
+    const top = $('#eggView .eg-top');
+    const ids = s.players.filter(p => s.phase === 'lobby' || p.inGame).map(p => p.id);
+    const res = s.phase === 'reveal' && s.result ? s.result.gains : null;
+    setHTML($('.oq', top), ids.map(id => { const p = s.players.find(x => x.id === id); const picked = (s.picked || []).includes(id);
+      const sub = s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : res ? (res[id] ? '+' + res[id] : 'KOSONG') : s.phase === 'pick' ? (picked ? 'PICKED' : '...') : p.score + ' PTS';
+      return `<div class="kp-card${s.phase === 'pick' && picked ? ' turn' : ''}${id === me.id ? ' me' : ''}" data-pid="${esc(id)}"><div class="ph-box"><span class="av" style="background-image:url(${SPR.avatarSheet(p.avatar)})"></span><b class="nm">${esc(p.name)}</b><small>${sub}</small></div><div class="bubble"></div></div>`; }).join(''));
+    setText($('.o-level', top), s.phase === 'lobby' ? 'CARI TELUR' : s.phase === 'over' ? 'HABIS!' : 'LEVEL ' + s.level + '/' + s.levels);
+    setText($('.o-who', top), s.phase === 'lobby' ? 'Follow the egg!' : s.script ? s.script.n + ' mangkuk' : '');
+  }
+  function renderEggControls(s, meP) {
+    const box = $('#controls');
+    const host = s.hostId === me.id, n = s.players.length, ph = s.phase;
+    const picked = (s.picked || []).includes(me.id), inGame = meP && meP.inGame;
+    const key = ['egg', ph, s.level, picked, n, host, (G.relays || []).join()].join('|');
+    let html = '';
+    if (ph === 'lobby') {
+      html = host
+        ? `<div class="ctl-info">Cari Telur · Players <b>${n}/6</b></div>
+           <div class="ctl-row"><button class="btn red big" data-act="start">START!<small>${n < 2 ? 'Main sorang pun boleh' : 'Mula main'}</small></button></div>
+           <div class="ctl-hint">${n < 6 ? 'Share code ' + esc(s.code || '') + ' · ' : ''}${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
+        : `<div class="ctl-info">Cari Telur · waiting for host to <b>START</b></div><div class="ctl-hint">Follow the egg under the bowls!</div>`;
+    } else if (ph === 'place') html = '<div class="ctl-info"><b>Tengok baik-baik!</b> Telur masuk mangkuk...</div>';
+    else if (ph === 'shuffle') html = '<div class="ctl-info"><b>Ikut mangkuk telur!</b> Jangan kelip mata...</div>';
+    else if (ph === 'pick') html = !inGame ? '<div class="ctl-info">Next game you can join in!</div>' : picked ? `<div class="ctl-info">Picked! Waiting others <b>${(s.picked || []).length}/${s.players.filter(p => p.inGame && p.connected).length}</b></div>` : '<div class="ctl-info"><b>Tap the bowl</b> with the egg!</div><div class="ctl-hint">Faster pick = more bonus</div>';
+    else if (ph === 'reveal') {
+      const g = s.result && s.result.gains[me.id];
+      html = `<div class="ctl-info">${g ? '<b>JUMPA!</b> +' + g : inGame ? '<b>Kosong lah!</b> +0' : 'Reveal!'} · You: <b>${meP ? meP.score : 0}</b> pts</div>` + (host ? '<div class="ctl-row"><button class="btn big" data-act="next">NEXT<small>Level seterusnya</small></button></div>' : '');
+    } else if (ph === 'over') {
+      const w = s.ranking && s.ranking[0];
+      html = `<div class="ctl-info"><b>${esc(w ? w.name : '')}</b> menang · ${w ? w.score : 0} pts</div>
+        <div class="ctl-row">${host ? '<button class="btn red big" data-act="newGame">MAIN LAGI<small>Restart</small></button>' : ''}<button class="btn big" data-act="results">RESULTS</button><button class="btn big" data-act="menu">MAIN MENU</button></div>`;
+    }
+    setCtl(box, key, html);
+  }
+  function eggFx(f) {
+    switch (f.type) {
+      case 'say': bubble(f.pid, f.text, f.mood); break;
+      case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
+      case 'banner': showBanner(f.text, f.style); break;
+      case 'picked': if (f.pid !== me.id) AU.play('tick'); break;
+      case 'reveal': {
+        const g = G.state && G.state.result && G.state.result.gains[me.id];
+        AU.play(g ? 'win' : 'lose');
+        if (g) { showBanner('JUMPA! +' + g, 'win'); vibrate(60); } else if (EV.myPick() != null) showBanner('KOSONG LAH!', 'bust');
+        break;
+      }
+      case 'gameover': confetti(); AU.play('tada'); break;
+    }
+  }
+  function showEggResult() {
+    const s = G && G.state; if (!s || s.phase !== 'over' || !s.ranking) return;
+    const r = s.ranking;
+    const pd = (p, i) => p ? `<div class="pd p${i + 1}"><div class="av" style="background-image:url(${SPR.avatarSheet(p.avatar)})"></div><div class="nm">${esc(p.name)}</div><div class="ch">${p.score} pts</div><div class="blk">${i + 1}</div></div>` : '';
+    showOverlay(`<div class="modal"><h2>RAJA TELUR · ${esc(r[0] ? r[0].name : '')}!</h2>
+      <div class="podium">${pd(r[1], 1)}${pd(r[0], 0)}${pd(r[2], 2)}</div>
+      ${r.map((p, i) => `<p>${i + 1}. ${esc(p.name)} — found <b>${p.correct}/${s.levels}</b> eggs · ${p.score} pts</p>`).join('')}
+      <div class="row">${G.isHost ? '<button class="btn red" data-h="newGame">MAIN LAGI</button>' : ''}<button class="btn" data-h="menu">MAIN MENU</button><button class="btn" data-h="close">CLOSE</button></div></div>`, 'podium');
     confetti();
   }
 
@@ -1282,6 +1367,18 @@
 
   function showHelp() {
     AU.unlock();
+    if ((G && G.state && G.state.game === 'egg') || (!G && me.mode === 'egg')) {
+      showOverlay(`<div class="modal"><h2>CARI TELUR · CARA MAIN</h2>
+        <ul>
+          <li>Watch which bowl the <b>egg</b> goes under.</li>
+          <li>The bowls shuffle — <b>ikut betul-betul!</b> (follow it)</li>
+          <li>Everyone taps the bowl they think has the egg. You have 10 seconds. Nobody sees your pick until the reveal.</li>
+          <li>Right bowl = <b>100 points</b> + up to 50 bonus for picking fast.</li>
+          <li>10 levels: 3 bowls at first, up to 6 bowls and very fast. From level 6 watch out for <b>jumping bowls</b> and <b>fake swaps</b>!</li>
+        </ul>
+        <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
+      return;
+    }
     if ((G && G.state && G.state.game === 'order') || (!G && me.mode === 'order')) {
       showOverlay(`<div class="modal"><h2>INGAT ORDER · CARA MAIN</h2>
         <ul>
@@ -1401,7 +1498,7 @@
     if (!G || !G.code) return;
     AU.play('click');
     const url = location.origin + location.pathname + '?room=' + G.code;
-    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
+    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order', egg: 'Cari Telur' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
     if (navigator.share) { navigator.share({ title: 'Kopitiam 21', text, url }).catch(() => {}); return; }
     const done = () => toast('Link copied! Paste to your friends');
     if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(done, () => toast('Code: ' + G.code));
@@ -1424,6 +1521,7 @@
   PV.mount($('#pongCanvas'), { onThrow: (p, a) => send({ t: 'throw', p, a }) });
   KV.mount($('#kopiCanvas'), { onLevel: m => send(m) });
   OV.mount($('#orderView'), { onChit: items => send({ t: 'chit', items }) });
+  EV.mount($('#eggCanvas'), { onPick: slot => send({ t: 'pick', slot }) });
   KV.onLocal = (ok) => {
     const m = $('#kopiMsg'); if (!m) return;
     const html = ok ? '<b>OK!</b> Lepas bila-bila — or risk a bit more...' : 'Your turn — <b>even one drop</b> counts!';
