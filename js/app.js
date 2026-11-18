@@ -17,7 +17,7 @@
   let pid = null;
   try { pid = sessionStorage.getItem('k21pid'); } catch (e) {}
   if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 10); try { sessionStorage.setItem('k21pid', pid); } catch (e) {} }
-  const me = { nameAuto: store.get('nameAuto', false), mode: store.get('mode', 'bj'), id: pid, name: store.get('name', ''), avatar: store.get('avatar', BJ.AVATAR_IDS[Math.floor(Math.random() * 8)]), drink: store.get('drink', 'tehtarik') };
+  const me = { nameAuto: store.get('nameAuto', false), mode: store.get('mode', 'pong') === 'bj' ? 'pong' : store.get('mode', 'pong'), id: pid, name: store.get('name', ''), avatar: store.get('avatar', BJ.AVATAR_IDS[Math.floor(Math.random() * 8)]), drink: store.get('drink', 'tehtarik') };
 
   // ---------- generated pixel assets ----------
   function gridURL(rows, pal, scale) {
@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v14';
+  const VERSION = 'v15';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -77,6 +77,21 @@
       dg.appendChild(b);
     }
     const mg = $('#modeGrid');
+    let taps = 0, tapT = null;
+    $('.sign').addEventListener('click', () => {
+      AU.unlock();
+      const sg = $('.sign'); sg.classList.remove('tap'); void sg.offsetWidth; sg.classList.add('tap');
+      clearTimeout(tapT); tapT = setTimeout(() => { taps = 0; }, 2500);
+      taps++;
+      if (taps < 9) { AU.play('tick'); return; }
+      taps = 0;
+      const b = $('.mode[data-mode="bj"]', mg);
+      if (!b.classList.contains('hidden')) return;
+      b.classList.remove('hidden');
+      b.click();
+      AU.play('bj'); confetti(); toast('Rahsia! Uncle Jack 21 unlocked');
+      b.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
     $$('.mode', mg).forEach(b => {
       b.classList.toggle('sel', b.dataset.mode === me.mode);
       b.onclick = () => { me.mode = b.dataset.mode; store.set('mode', me.mode); $$('.mode', mg).forEach(x => x.classList.toggle('sel', x === b)); AU.unlock(); AU.play('pop'); };
@@ -1365,8 +1380,27 @@
     showOverlay(`<div class="modal"><h2>${esc(title)}</h2><p>${html}</p><div class="row"><button class="btn green" data-h="close">OK LAH</button></div></div>`, 'alert');
   }
 
+  function showHelpAll() {
+    showOverlay(`<div class="modal help-all"><h2>CARA MAIN · HOW TO PLAY</h2>
+      <h3>TELUR PONG · 2 players</h3>
+      <ul><li><b>Swipe up</b> to throw an egg into the other player's 6 kopi cups. Longer swipe = further, tilt to aim.</li>
+      <li>Watch the <b>ANGIN</b> (fan wind). 2 throws a turn; both in = <b>Telur balik!</b> Sink all 6 cups to win.</li></ul>
+      <h3>KOPI TUMPAH · 2–6 players</h3>
+      <ul><li>Take turns pouring kopi into the same glass. <b>Press and hold TUANG</b> — the longer you hold, the faster it pours.</li>
+      <li>Any drip counts. The spill point is secret. Whoever makes it <b>tumpah</b> is out and belanja kopi. Last one left wins.</li></ul>
+      <h3>INGAT ORDER · 1–6 players</h3>
+      <ul><li>Customers say their orders, then the bubbles disappear. Key the whole order into the tablet from memory (drinks <b>PANAS</b> or <b>AIS</b>, plus food).</li>
+      <li>Take turns, 5 tables each, getting harder. Watch for <b>"tambah"</b> and <b>"tukar"</b>! +10 right, −5 wrong, +20 perfect table.</li></ul>
+      <h3>CARI TELUR · 1–6 players</h3>
+      <ul><li>Follow the egg under the shuffling bowls, then everyone taps a bowl at the same time.</li>
+      <li>10 levels, 3 up to 6 bowls. 100 points per egg found, plus a bonus for picking fast.</li></ul>
+      <h3>MAIN DENGAN KAWAN</h3>
+      <ul><li>Pick a game, tap <b>BUKA MEJA</b>, and share the 4-letter code. Friends type it in and tap <b>MASUK</b>.</li></ul>
+      <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
+  }
   function showHelp() {
     AU.unlock();
+    if (!G) { showHelpAll(); return; }
     if ((G && G.state && G.state.game === 'egg') || (!G && me.mode === 'egg')) {
       showOverlay(`<div class="modal"><h2>CARI TELUR · CARA MAIN</h2>
         <ul>
@@ -1547,7 +1581,7 @@
     $('i', pw).style.background = p < 0.5 ? '#7cff9a' : p < 0.85 ? '#f6c744' : '#ff6b5b';
   };
   initHome();
-  $('.chit-foot span').textContent = 'Play chips only · no real money · ' + VERSION;
+  $('.chit-foot span').textContent = VERSION;
   initGameUI();
   if (OFFLINE && params.has('autohost')) { me.name = me.name || 'Tester'; if (params.get('mode')) me.mode = params.get('mode'); startHost(); }
   else {

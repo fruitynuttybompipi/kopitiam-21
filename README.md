@@ -57,7 +57,11 @@ Pick **CARI TELUR** on the first screen before tapping BUKA MEJA. You can also p
 - 10 levels: 3 bowls at first, then 4, 5 and finally 6 bowls, faster each level. From level 6 some bowls jump over others and some swaps are fakes.
 - The next level starts by itself after the reveal; the host can tap NEXT to skip ahead.
 
-## Uncle Jack 21 house rules
+## Uncle Jack 21 (secret game)
+
+Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it.
+
+### House rules
 
 - Everyone starts with **1000 chips**. These are play chips only, with no real money.
 - Blackjack pays 3:2. Insurance pays 2:1. The Tauke stands on 17. You can double on any two cards, and split up to 4 hands.
