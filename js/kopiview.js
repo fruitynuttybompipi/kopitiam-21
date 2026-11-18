@@ -16,7 +16,7 @@
   function layout() {
     const r = cv.getBoundingClientRect();
     if (!r.width || !r.height) return false;
-    S = r.width < 640 ? 3 : 4;
+    S = Math.round((r.width / UIZ.z < 640 ? 3 : 4) * UIZ.z);
     const w = Math.ceil(r.width / S), h = Math.ceil(r.height / S);
     if (w !== W || h !== H) { W = w; H = h; cv.width = W; cv.height = H; }
     return true;

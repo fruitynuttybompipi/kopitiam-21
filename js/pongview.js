@@ -29,7 +29,7 @@
   function layout() {
     const r = cv.getBoundingClientRect();
     if (!r.width || !r.height) return false;
-    S = r.width < 640 ? 2 : 3;
+    S = Math.round((r.width / UIZ.z < 640 ? 2 : 3) * UIZ.z);
     const w = Math.ceil(r.width / S), h = Math.ceil(r.height / S);
     if (w !== W || h !== H) { W = w; H = h; cv.width = W; cv.height = H; }
     // fit: near table edge at the bottom, far edge ~30% down
@@ -367,7 +367,7 @@
   // screen position (CSS px) of a world point, for HTML floating text
   PV.screenOf = function (wx, wy, z) {
     const r = cv.getBoundingClientRect(), p = projW(wx, wy, z || 0);
-    return { x: r.left + p.x * S, y: r.top + p.y * S };
+    return { x: (r.left + p.x * S) / UIZ.z, y: (r.top + p.y * S) / UIZ.z };
   };
   PV.mySeat = () => mySeat;
   root.PV = PV;

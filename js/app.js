@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v17';
+  const VERSION = 'v18';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -169,9 +169,9 @@
   }
 
   function paintTable() {
-    const t = $('#table'); const r = t.getBoundingClientRect();
+    const t = $('#table'); const r = UIZ.rect(t);
     if (!r.width || !r.height) return;
-    const S = innerWidth < 640 ? 3 : 4;
+    const S = innerWidth / UIZ.z < 640 ? 3 : 4;
     const w = Math.round(r.width / S), h = Math.round(r.height / S);
     const key = w + 'x' + h;
     if (paintTable.key === key) return;
@@ -596,16 +596,16 @@
         return;
       }
       if (e.parentNode !== box) {
-        const r0 = e.getBoundingClientRect();
+        const r0 = UIZ.rect(e);
         box.insertBefore(e, box.children[i] || null);
-        const r1 = e.getBoundingClientRect();
+        const r1 = UIZ.rect(e);
         e.animate([{ transform: `translate(${r0.left - r1.left}px,${r0.top - r1.top}px)` }, { transform: 'none' }], { duration: 320, easing: 'ease-out' });
       } else if (box.children[i] !== e) box.insertBefore(e, box.children[i] || null);
       if (!c.hidden && !e._face) { setFace(e, c); e.classList.remove('down'); AU.play('flip'); }
     });
   }
   function dealIn(e, faceUp) {
-    const sh = $('#shoe').getBoundingClientRect(), r = e.getBoundingClientRect();
+    const sh = UIZ.rect($('#shoe')), r = UIZ.rect(e);
     const dx = sh.left + 8 - r.left, dy = sh.top + 8 - r.top;
     e.animate([
       { transform: `translate(${dx}px,${dy}px) rotate(-25deg) scale(.8)` },
@@ -616,9 +616,9 @@
     if (faceUp) setTimeout(() => e.classList.remove('down'), 330);
   }
   function sweepCard(e) {
-    const r = e.getBoundingClientRect();
+    const r = UIZ.rect(e);
     if (!r.width || firstRender) { e.remove(); return; }
-    const tk = $('.tk-who').getBoundingClientRect();
+    const tk = UIZ.rect($('.tk-who'));
     e.classList.add('sweep');
     Object.assign(e.style, { left: r.left + 'px', top: r.top + 'px', margin: 0 });
     $('#fxLayer').appendChild(e);
@@ -892,8 +892,8 @@
     b.className = 'bubble ' + (md || '');
     b.style.marginLeft = '0px';
     if (t.classList.contains('tk-who') || t.classList.contains('ph-card') || t.classList.contains('kp-card')) { void b.offsetWidth; b.classList.add('show'); if (md === 'happy' || md === 'sad') mood($('.av', t), md); return; }
-    const pr = b.parentElement.getBoundingClientRect(), half = b.offsetWidth / 2, cx = pr.left + pr.width / 2;
-    const shift = Math.max(6 - (cx - half), Math.min(0, innerWidth - 6 - (cx + half)));
+    const pr = UIZ.rect(b.parentElement), half = b.offsetWidth / 2, cx = pr.left + pr.width / 2;
+    const shift = Math.max(6 - (cx - half), Math.min(0, innerWidth / UIZ.z - 6 - (cx + half)));
     b.style.marginLeft = shift + 'px';
     void b.offsetWidth;
     b.classList.add('show');
@@ -904,7 +904,7 @@
     av.classList.remove('happy', 'sad'); void av.offsetWidth; av.classList.add(m);
     clearTimeout(av._mt); av._mt = setTimeout(() => av.classList.remove(m), 1600);
   }
-  function center(e) { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, r }; }
+  function center(e) { const r = UIZ.rect(e); return { x: r.left + r.width / 2, y: r.top + r.height / 2, r }; }
 
   function flyChips(pid, amount) {
     const t = targetFor(pid); if (!t) return;
@@ -928,7 +928,7 @@
 
   function floatText(target, text, cls) {
     if (!target) return;
-    const r = target.getBoundingClientRect();
+    const r = UIZ.rect(target);
     const d = el('div', 'float ' + (cls || ''));
     d.textContent = text;
     d.style.left = (r.left + r.width / 2) + 'px'; d.style.top = (r.top + 10) + 'px';
@@ -965,9 +965,9 @@
     for (let i = 0; i < 70; i++) {
       const p = el('div', 'px');
       p.style.background = cols[i % cols.length];
-      p.style.left = (Math.random() * innerWidth) + 'px'; p.style.top = '-10px';
+      p.style.left = (Math.random() * innerWidth / UIZ.z) + 'px'; p.style.top = '-10px';
       $('#fxLayer').appendChild(p);
-      const dx = (Math.random() - 0.5) * 120, dy = innerHeight + 30;
+      const dx = (Math.random() - 0.5) * 120, dy = innerHeight / UIZ.z + 30;
       const a = p.animate([{ transform: 'translate(0,0) rotate(0)' }, { transform: `translate(${dx}px,${dy}px) rotate(${Math.random() * 720}deg)` }],
         { duration: 1800 + Math.random() * 1800, delay: Math.random() * 600, easing: 'steps(24)', fill: 'forwards' });
       a.onfinish = () => p.remove();
@@ -1143,10 +1143,10 @@
           const p = PV.screenOf(f.pos[0], f.pos[1], 0);
           floatAt(p.x, p.y - 6, 'PECAH!', 'neg');
         } else if (f.outcome === 'floor') {
-          const r = $('#pongCanvas').getBoundingClientRect();
+          const r = UIZ.rect($('#pongCanvas'));
           floatAt(r.left + r.width / 2, r.top + r.height * 0.5, 'JATUH LANTAI!', 'neg');
         } else if (f.outcome === 'drop') {
-          const r = $('#pongCanvas').getBoundingClientRect();
+          const r = UIZ.rect($('#pongCanvas'));
           floatAt(r.left + r.width / 2, r.top + r.height * 0.7, 'TERLEPAS!', 'neg');
         }
         break;

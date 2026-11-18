@@ -16,6 +16,8 @@ img, .av, .drink, canvas { image-rendering: pixelated; image-rendering: crisp-ed
 button { font: inherit; cursor: pointer; color: inherit; touch-action: manipulation; }
 .hidden { display: none !important; }
 
+:root { --z: 1; }
+#home, #game, #fxLayer, #banner, #overlay, #status, #toast { zoom: var(--z); }
 #scene { position: fixed; inset: 0; width: 100vw; height: 100vh; image-rendering: pixelated; z-index: 0; }
 .screen { position: fixed; inset: 0; z-index: 1; }
 
@@ -306,7 +308,7 @@ input::placeholder { color: #7d6c50; }
 .o-table { position: relative; height: 34px; margin: 0 4%; background: #ece8df; box-shadow: inset 0 0 0 3px var(--ink), inset 0 -8px 0 3px #cfc8b6, inset 0 5px 0 3px #fbf8f0; z-index: 3; }
 .o-table i { position: absolute; bottom: -26px; width: 10px; height: 26px; background: #3b2416; box-shadow: inset 0 0 0 2px var(--ink); }
 .o-table i:first-child { left: 14%; } .o-table i:last-child { right: 14%; }
-.o-bub { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%) scale(0); transform-origin: 50% 100%; background: #fff; padding: 6px 9px 6px; box-shadow: inset 0 0 0 3px var(--ink); --n: 3px; z-index: 6; width: max-content; max-width: min(280px, 86vw); pointer-events: none;
+.o-bub { position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%) scale(0); transform-origin: 50% 100%; background: #fff; padding: 6px 9px 6px; box-shadow: inset 0 0 0 3px var(--ink); --n: 3px; z-index: 6; width: max-content; max-width: min(280px, calc(86vw / var(--z))); pointer-events: none;
   clip-path: polygon(0 var(--n), var(--n) var(--n), var(--n) 0, calc(100% - var(--n)) 0, calc(100% - var(--n)) var(--n), 100% var(--n), 100% calc(100% - var(--n)), calc(100% - var(--n)) calc(100% - var(--n)), calc(100% - var(--n)) 100%, var(--n) 100%, var(--n) calc(100% - var(--n)), 0 calc(100% - var(--n))); transition: transform .12s steps(3); }
 .o-bub.show { transform: translateX(-50%) scale(1); }
 .o-bub.extra { background: #fff6b8; }
@@ -433,7 +435,7 @@ input::placeholder { color: #7d6c50; }
 
 #overlay.dark { background: rgba(26, 15, 10, .93); }
 #overlay { position: fixed; inset: 0; z-index: 70; background: rgba(26, 15, 10, .72); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.modal { background: var(--paper); width: 100%; max-width: 440px; max-height: 88vh; overflow-y: auto; padding: 18px; box-shadow: inset 0 0 0 4px var(--ink); animation: popIn .25s steps(3); }
+.modal { background: var(--paper); width: 100%; max-width: 440px; max-height: calc(88vh / var(--z)); overflow-y: auto; padding: 18px; box-shadow: inset 0 0 0 4px var(--ink); animation: popIn .25s steps(3); }
 .modal h2 { font-family: var(--px); font-size: 13px; margin: 2px 0 12px; line-height: 1.4; }
 .modal p, .modal li { font-size: 20px; line-height: 1.15; margin: 6px 0; }
 .modal ul { padding-left: 20px; margin: 6px 0; }

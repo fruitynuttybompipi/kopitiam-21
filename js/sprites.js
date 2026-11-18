@@ -2,6 +2,23 @@
 (function (root) {
   'use strict';
 
+  // Big screens: scale the whole UI evenly from a ~1440x900 laptop base, in 0.25 steps.
+  // UI layers get CSS zoom (--z); canvases multiply their pixel size by UIZ.z.
+  const UIZ = root.UIZ = { z: 1 };
+  UIZ.calc = function () {
+    const z = Math.max(1, Math.min(root.innerWidth / 1440, root.innerHeight / 900));
+    UIZ.z = Math.floor(z * 4) / 4;
+    root.document.documentElement.style.setProperty('--z', UIZ.z);
+    return UIZ.z;
+  };
+  // page coords (viewport px) <-> zoomed-layer CSS px
+  UIZ.rect = function (e) {
+    const r = e.getBoundingClientRect(), z = UIZ.z;
+    return { left: r.left / z, top: r.top / z, width: r.width / z, height: r.height / z, right: r.right / z, bottom: r.bottom / z };
+  };
+  UIZ.calc();
+  root.addEventListener('resize', UIZ.calc);
+
   // Each avatar row = [cols 0-3, cols 4-11, cols 12-15] so every row is 16 px wide.
   const BODY_END = ['.kkk', 'kkkkkkkk', 'kkk.'];
   const NECK = ['....', '.kSSSSk.', '....'];

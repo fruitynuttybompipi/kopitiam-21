@@ -121,7 +121,7 @@
     b.classList.toggle('extra', step.kind !== 'order');
     // keep the bubble on screen (measure the layout box, not the scaled-in animation)
     b.style.marginLeft = '0px';
-    const cr = c.getBoundingClientRect(), half = b.offsetWidth / 2, mid = cr.left + cr.width / 2, vw = window.innerWidth;
+    const cr = UIZ.rect(c), half = b.offsetWidth / 2, mid = cr.left + cr.width / 2, vw = window.innerWidth / UIZ.z;
     const shift = Math.max(6 - (mid - half), Math.min(0, vw - 6 - (mid + half)));
     b.style.marginLeft = shift + 'px';
     c.classList.add('talk');

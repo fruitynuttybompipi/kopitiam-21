@@ -44,7 +44,7 @@
   let cat = { x: -40, active: false, next: 8 }, cicak = { active: false, next: 4, x: 0, y: 0, vx: 0, vy: 0, pause: 0 };
 
   function layout() {
-    S = root.innerWidth < 640 ? 3 : 4;
+    S = Math.round((root.innerWidth < 640 ? 3 : 4) * UIZ.z);
     W = Math.ceil(root.innerWidth / S); H = Math.ceil(root.innerHeight / S);
     cv.width = W; cv.height = H;
     L.ceil = Math.max(6, Math.round(H * 0.06));
