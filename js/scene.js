@@ -108,12 +108,20 @@
       ptext(g, 'TEH TARIK', cx0 + 4, ct + 7, '#f6c744');
       L.counter = { x: cx0, top: ct - 3, w: cw };
     } else L.counter = null;
-    // hawker stalls along the back wall
+    // hawker stalls along the back wall: as many as fit, left to right
     L.stalls = [];
-    const sw = 58;
-    const right = L.counter ? L.counter.x - 6 : W - 4;
-    L.stalls.push({ kind: 'nasi', x: 4, w: sw });
-    if (right - sw > 4 + sw + 8) L.stalls.push({ kind: 'mee', x: right - sw, w: sw });
+    const sw = 48, gap = 4;
+    const right = L.counter ? L.counter.x - 4 : W - 2;
+    // fill from both edges inward so the side stalls stay visible around the game in the middle
+    let lx = 3, rx = right - sw;
+    ['nasi', 'roti', 'ckt', 'rojak', 'mee'].forEach((kind, i) => {
+      const left = i % 2 === 0;
+      const x = left ? lx : rx;
+      const clash = L.stalls.some(o => x < o.x + o.w + gap && x + sw + gap > o.x);
+      if (x < 2 || x + sw > right || clash) return;
+      L.stalls.push({ kind, x, w: sw });
+      if (left) lx += sw + gap; else rx -= sw + gap;
+    });
     for (const st of L.stalls) drawStall(g, st);
     // warm light
     const grd = g.createRadialGradient(W / 2, 0, 2, W / 2, 0, W * 0.8);
@@ -123,59 +131,90 @@
   }
 
   // ---------- hawker stalls ----------
+  const STALLS = {
+    nasi: { lines: ['NASI', 'LEMAK'], sign: '#2f8a5f', light: '#3fae6a', body: '#8a5a34', bodyD: '#6b4226', bodyL: '#a8703f', price: 'RM5', hawker: 'makcik', fx: 'steam' },
+    ckt: { lines: ['PENANG CHAR', 'KUEY TEOW'], sign: '#2a5cb0', light: '#4a7cd0', body: '#b9c0c8', bodyD: '#8f979f', bodyL: '#dfe4e8', price: 'RM9', hawker: 'ahpek', fx: 'fire', cart: true },
+    roti: { lines: ['ROTI', 'CANAI'], sign: '#d97a1e', light: '#f09a3e', body: '#8a5a34', bodyD: '#6b4226', bodyL: '#a8703f', price: 'RM2', hawker: 'anneh', fx: 'flip' },
+    mee: { lines: ['WANTAN', 'MEE'], sign: '#c0392b', light: '#d24a3a', body: '#b9c0c8', bodyD: '#8f979f', bodyL: '#dfe4e8', price: 'RM7', hawker: 'auntie', fx: 'steam', cart: true },
+    rojak: { lines: ['ROJAK'], sign: '#7a2a5a', light: '#9a4a7a', body: '#8a5a34', bodyD: '#6b4226', bodyL: '#a8703f', price: 'RM6', hawker: 'ahboy', fx: null },
+  };
   function drawStall(g, st) {
-    const nasi = st.kind === 'nasi';
-    const x = st.x, w = st.w, base = L.floor + 2, ctop = base - 20, signY = ctop - 30;
-    st.ctop = ctop; st.signY = signY;
+    const c = STALLS[st.kind];
+    const x = st.x, w = st.w, base = L.floor + 2, ctop = base - 20, signH = 6 * c.lines.length + 4, signY = ctop - 22 - signH;
+    st.ctop = ctop;
     // poles + signboard
-    g.fillStyle = '#4a4a4a'; g.fillRect(x + 2, signY + 10, 2, ctop - signY - 10); g.fillRect(x + w - 4, signY + 10, 2, ctop - signY - 10);
-    g.fillStyle = '#2a1a12'; g.fillRect(x - 1, signY - 1, w + 2, 12);
-    g.fillStyle = nasi ? '#2f8a5f' : '#c0392b'; g.fillRect(x, signY, w, 10);
-    g.fillStyle = nasi ? '#3fae6a' : '#d24a3a'; g.fillRect(x, signY, w, 1);
-    const label = nasi ? 'NASI LEMAK' : 'WANTAN MEE';
-    ptext(g, label, x + Math.round((w - tw(label)) / 2), signY + 3, '#f6c744');
-    // awning stripes
-    for (let i = 0; i < w; i += 6) { g.fillStyle = (i / 6) % 2 ? '#fbf3dc' : (nasi ? '#2f8a5f' : '#c0392b'); g.fillRect(x + i, signY + 11, Math.min(6, w - i), 3); }
+    g.fillStyle = '#4a4a4a'; g.fillRect(x + 2, signY + signH, 2, ctop - signY - signH); g.fillRect(x + w - 4, signY + signH, 2, ctop - signY - signH);
+    g.fillStyle = '#2a1a12'; g.fillRect(x - 1, signY - 1, w + 2, signH + 2);
+    g.fillStyle = c.sign; g.fillRect(x, signY, w, signH);
+    g.fillStyle = c.light; g.fillRect(x, signY, w, 1);
+    c.lines.forEach((l, i) => ptext(g, l, x + Math.round((w - tw(l)) / 2), signY + 3 + i * 6, '#f6c744'));
+    // awning
+    for (let i = 0; i < w; i += 6) { g.fillStyle = (i / 6) % 2 ? '#fbf3dc' : c.sign; g.fillRect(x + i, signY + signH + 1, Math.min(6, w - i), 3); }
     // glass display case
     const gy = ctop - 12;
     g.fillStyle = '#2a1a12'; g.fillRect(x + 3, gy - 1, w - 6, 13);
     g.fillStyle = '#d6eef4'; g.fillRect(x + 4, gy, w - 8, 11);
-    if (nasi) {
-      // banana-leaf packets, sambal, eggs
-      for (let i = 0; i < 5; i++) { const px = x + 7 + i * 7, py = gy + 4; g.fillStyle = '#2a6b2a'; g.fillRect(px, py + 2, 6, 4); g.fillRect(px + 1, py + 1, 4, 1); g.fillRect(px + 2, py, 2, 1); g.fillStyle = '#3f9a3a'; g.fillRect(px + 1, py + 3, 2, 2); }
-      g.fillStyle = '#c0392b'; g.fillRect(x + w - 16, gy + 6, 8, 4); g.fillStyle = '#e8e2d0'; g.fillRect(x + w - 17, gy + 9, 10, 1);
-      g.fillStyle = '#fff8ea'; g.fillRect(x + w - 8, gy + 5, 3, 4); g.fillStyle = '#f2b81e'; g.fillRect(x + w - 7, gy + 6, 1, 2);
-    } else {
-      // hanging noodles + char siu, bowls
-      for (let i = 0; i < 4; i++) { const px = x + 7 + i * 6; g.fillStyle = '#e8c35a'; g.fillRect(px, gy + 1, 3, 7); g.fillStyle = '#c9a23e'; g.fillRect(px + 1, gy + 2, 1, 6); }
-      for (let i = 0; i < 3; i++) { const px = x + 33 + i * 5; g.fillStyle = '#b8322a'; g.fillRect(px, gy + 1, 3, 6); g.fillStyle = '#7a1f17'; g.fillRect(px, gy + 6, 3, 1); }
-      g.fillStyle = '#fbf8f0'; g.fillRect(x + w - 14, gy + 8, 8, 3); g.fillStyle = '#3fae6a'; g.fillRect(x + w - 14, gy + 9, 8, 1);
+    const R = (a, b, ww, hh, col) => { g.fillStyle = col; g.fillRect(x + a, gy + b, ww, hh); };
+    if (st.kind === 'nasi') {
+      for (let i = 0; i < 4; i++) { const px = 6 + i * 7; R(px, 6, 6, 4, '#2a6b2a'); R(px + 1, 5, 4, 1, '#2a6b2a'); R(px + 2, 4, 2, 1, '#2a6b2a'); R(px + 1, 7, 2, 2, '#3f9a3a'); }
+      R(w - 15, 6, 7, 4, '#c0392b'); R(w - 16, 9, 9, 1, '#e8e2d0'); R(w - 8, 5, 3, 4, '#fff8ea'); R(w - 7, 6, 1, 2, '#f2b81e');
+    } else if (st.kind === 'mee') {
+      for (let i = 0; i < 3; i++) { const px = 6 + i * 6; R(px, 1, 3, 7, '#e8c35a'); R(px + 1, 2, 1, 6, '#c9a23e'); }
+      for (let i = 0; i < 2; i++) { const px = 25 + i * 5; R(px, 1, 3, 6, '#b8322a'); R(px, 6, 3, 1, '#7a1f17'); }
+      R(w - 13, 8, 8, 3, '#fbf8f0'); R(w - 13, 9, 8, 1, '#3fae6a');
+    } else if (st.kind === 'ckt') {
+      // plates of flat noodles with prawns and cockles
+      for (let i = 0; i < 2; i++) { const px = 6 + i * 14; R(px, 8, 12, 2, '#fbf8f0'); R(px + 2, 6, 8, 2, '#8a5028'); R(px + 3, 5, 2, 1, '#f08a5a'); R(px + 7, 5, 2, 1, '#3a2a1a'); }
+      R(w - 14, 9, 9, 1, '#2a2a2a');
+    } else if (st.kind === 'roti') {
+      // stack of roti + curry
+      for (let i = 0; i < 4; i++) R(6, 9 - i * 2, 14, 2, i % 2 ? '#e8c890' : '#d9a85a');
+      R(24, 7, 8, 3, '#c97a2a'); R(23, 9, 10, 1, '#e8e2d0');
+      R(w - 12, 6, 6, 4, '#fbf8f0'); R(w - 11, 7, 4, 2, '#7a3a1a');
+    } else if (st.kind === 'rojak') {
+      // fruit pieces + dark sauce
+      const cols = ['#9ad04a', '#f2c84a', '#f58ab0', '#7ab83a', '#e8e2d0', '#f2c84a'];
+      for (let i = 0; i < 6; i++) R(6 + (i % 3) * 5, 3 + Math.floor(i / 3) * 4, 4, 3, cols[i]);
+      R(w - 18, 6, 10, 4, '#3a2010'); R(w - 19, 9, 12, 1, '#e8e2d0'); R(w - 16, 6, 2, 1, '#a07040');
     }
     g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(x + 5, gy + 1, 1, 9);
     // counter / cart body
     g.fillStyle = '#2a1a12'; g.fillRect(x, ctop - 1, w, base - ctop + 1);
-    g.fillStyle = nasi ? '#8a5a34' : '#b9c0c8'; g.fillRect(x + 1, ctop, w - 2, base - ctop - 1);
-    g.fillStyle = nasi ? '#6b4226' : '#8f979f'; for (let i = x + 4; i < x + w - 2; i += 6) g.fillRect(i, ctop + 2, 1, base - ctop - 4);
-    g.fillStyle = nasi ? '#a8703f' : '#dfe4e8'; g.fillRect(x + 1, ctop, w - 2, 1);
-    const tag = nasi ? 'RM5' : 'RM7';
-    g.fillStyle = '#fbf3dc'; g.fillRect(x + w - tw(tag) - 7, ctop + 4, tw(tag) + 4, 7);
-    ptext(g, tag, x + w - tw(tag) - 5, ctop + 5, '#c0392b');
-    if (!nasi) { g.fillStyle = '#2a1a12'; g.fillRect(x + 6, base - 2, 6, 4); g.fillRect(x + w - 12, base - 2, 6, 4); }
+    g.fillStyle = c.body; g.fillRect(x + 1, ctop, w - 2, base - ctop - 1);
+    g.fillStyle = c.bodyD; for (let i = x + 4; i < x + w - 2; i += 6) g.fillRect(i, ctop + 2, 1, base - ctop - 4);
+    g.fillStyle = c.bodyL; g.fillRect(x + 1, ctop, w - 2, 1);
+    g.fillStyle = '#fbf3dc'; g.fillRect(x + w - tw(c.price) - 7, ctop + 4, tw(c.price) + 4, 7);
+    ptext(g, c.price, x + w - tw(c.price) - 5, ctop + 5, '#c0392b');
+    if (c.cart) { g.fillStyle = '#2a1a12'; g.fillRect(x + 6, base - 2, 6, 4); g.fillRect(x + w - 12, base - 2, 6, 4); }
   }
   function drawStallLife(t) {
     for (const st of L.stalls || []) {
-      const nasi = st.kind === 'nasi';
+      const c = STALLS[st.kind];
       // hawker behind the counter
-      const id = nasi ? 'makcik' : 'ahpek';
-      const hx = st.x + Math.round(st.w * (nasi ? 0.3 : 0.62)) - 8, hy = st.ctop - 15 + (Math.floor(t * 2 + st.x) % 2);
-      SPR.drawGrid(cx, SPR.avatarRows(id).slice(0, 13), SPR.AVATARS[id].pal, hx, hy, 1);
-      // redraw display case top edge over the hawker's body
+      const hx = st.x + Math.round(st.w * 0.55) - 8, hy = st.ctop - 15 + (Math.floor(t * 2 + st.x) % 2);
+      SPR.drawGrid(cx, SPR.avatarRows(c.hawker).slice(0, 13), SPR.AVATARS[c.hawker].pal, hx, hy, 1);
       cx.fillStyle = '#2a1a12'; cx.fillRect(st.x + 3, st.ctop - 13, st.w - 6, 1);
-      // steam from the noodle pot / rice
-      for (let i = 0; i < 3; i++) {
-        const k = ((t * 0.7 + i / 3) % 1);
-        cx.fillStyle = `rgba(255,255,255,${(0.7 * (1 - k)).toFixed(2)})`;
-        cx.fillRect(Math.round(st.x + st.w * (nasi ? 0.75 : 0.25) + Math.sin(t * 3 + i) * 2), Math.round(st.ctop - 14 - k * 14), 1, 2);
+      const ax = st.x + Math.round(st.w * 0.25), ay = st.ctop - 13;
+      if (c.fx === 'steam') {
+        for (let i = 0; i < 3; i++) {
+          const k = ((t * 0.7 + i / 3) % 1);
+          cx.fillStyle = `rgba(255,255,255,${(0.7 * (1 - k)).toFixed(2)})`;
+          cx.fillRect(Math.round(ax + Math.sin(t * 3 + i) * 2), Math.round(ay - 1 - k * 14), 1, 2);
+        }
+      } else if (c.fx === 'fire') {
+        // wok over flames
+        cx.fillStyle = '#2a2a2a'; cx.fillRect(ax - 6, ay - 3, 12, 2); cx.fillRect(ax - 4, ay - 1, 8, 1); cx.fillRect(ax + 6, ay - 4, 4, 1);
+        for (let i = 0; i < 4; i++) {
+          const fh = 2 + Math.floor(((Math.sin(t * 18 + i * 2) + 1) / 2) * 4);
+          cx.fillStyle = i % 2 ? '#f6c744' : '#e8641e';
+          cx.fillRect(ax - 4 + i * 2, ay - 3 - fh, 2, fh);
+        }
+        if (Math.sin(t * 5) > 0.3) { cx.fillStyle = 'rgba(80,80,80,.5)'; cx.fillRect(Math.round(ax + Math.sin(t * 2) * 3), ay - 12 - Math.floor(t * 8 % 6), 2, 2); }
+      } else if (c.fx === 'flip') {
+        // roti being flipped
+        const k = (t * 1.3) % 1, up = Math.sin(k * Math.PI) * 10;
+        cx.fillStyle = '#2a2a2a'; cx.fillRect(ax - 6, ay - 1, 12, 1);
+        cx.fillStyle = '#e8c890'; cx.fillRect(ax - 4, Math.round(ay - 3 - up), 8, k > 0.4 && k < 0.6 ? 1 : 2);
       }
     }
   }

@@ -49,7 +49,9 @@
     if (st.phase === 'lobby' || st.phase === 'pick') shown = 0;
 
     // new cup slides in
-    if (st.cupNo !== lastCup) { if (lastCup !== -1) slideT = now; lastCup = st.cupNo; spillCup = -1; parts.length = 0; }
+    // a fresh cup (new cup in this game, or a whole new game) resets the spill
+    const cupKey = st.round + ':' + st.cupNo;
+    if (cupKey !== lastCup) { if (lastCup !== -1) slideT = now; lastCup = cupKey; spillCup = -1; parts.length = 0; }
     const slide = slideT && now - slideT < 600 ? Math.round(-(1 - (now - slideT) / 600) * W * 0.7) : 0;
 
     // table
@@ -59,7 +61,7 @@
     cx.fillStyle = '#5a361f'; for (let x = 0; x < W; x += 22) cx.fillRect(x, g.tableY + 9, 1, H);
     cx.fillStyle = '#2a1a12'; cx.fillRect(0, g.tableY + 7, W, 1);
 
-    const spilling = spillCup === st.cupNo;
+    const spilling = spillCup === cupKey;
     // puddle
     if (spilling) {
       const k = Math.min(1, (now - spillT) / 1500);
@@ -249,7 +251,7 @@
   };
   KV.fx = function (f) {
     if (f.type === 'spill') {
-      spillT = performance.now(); spillCup = st ? st.cupNo : -1;
+      spillT = performance.now(); spillCup = st ? st.round + ':' + st.cupNo : -1;
       local = null; AU.pour && AU.pour(false); AU.play('splash'); AU.play('bust');
       if (layout()) {
         const g = glass();

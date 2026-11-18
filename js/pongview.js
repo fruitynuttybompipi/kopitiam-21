@@ -116,13 +116,24 @@
     ellipseRows(b.x, b.y, rx * 1.3, ry * 1.15, (x, y, w, dy) => { cx.fillStyle = dy < 0 ? '#e9e4d6' : '#cfc8b6'; cx.fillRect(x, y, w, 1); });
     // body
     const top = Math.round(t.y), bot = Math.round(b.y);
+    const bh = bot - top, logo = rx >= 6 && bh >= 12 && root.Scene;
     for (let y = top; y <= bot; y++) {
       const k = (y - top) / Math.max(1, bot - top);
       const hw = rx * (1 - 0.22 * k);
       const x0 = Math.round(b.x - hw), w = Math.max(1, Math.round(hw * 2));
+      const band = logo ? (k > 0.18 && k < 0.24) || (k > 0.76 && k < 0.82) : k > 0.32 && k < 0.5;
       cx.fillStyle = '#2a1a12'; cx.fillRect(x0 - 1, y, w + 2, 1);
-      cx.fillStyle = k > 0.32 && k < 0.5 ? '#3fae6a' : '#f6f2e6'; cx.fillRect(x0, y, w, 1);
-      cx.fillStyle = k > 0.32 && k < 0.5 ? '#2f8a5f' : '#d9d2c0'; cx.fillRect(x0 + Math.round(w * 0.72), y, Math.max(1, Math.round(w * 0.28)), 1);
+      cx.fillStyle = band ? '#3fae6a' : '#f6f2e6'; cx.fillRect(x0, y, w, 1);
+      cx.fillStyle = band ? '#2f8a5f' : '#d9d2c0'; cx.fillRect(x0 + Math.round(w * 0.72), y, Math.max(1, Math.round(w * 0.28)), 1);
+    }
+    if (logo) {
+      // green KOPITIAM 21 logo printed on the cup
+      const sc = rx >= 26 ? 2 : 1, big = rx * 1.6 >= root.Scene.tw('KOPITIAM', sc) + 2;
+      const lines = big ? [['KOPITIAM', sc], ['21', sc * (bh >= 30 ? 2 : 1)]] : [['21', sc]];
+      const th = lines.reduce((a, l) => a + 5 * l[1], 0) + (lines.length - 1) * sc;
+      let ly = Math.round(top + bh * 0.5 - th / 2);
+      const cxm = b.x - rx * 0.06;
+      for (const [txt, s2] of lines) { root.Scene.ptext(cx, txt, Math.round(cxm - root.Scene.tw(txt, s2) / 2), ly, '#2f8a5f', s2); ly += 5 * s2 + sc; }
     }
     cx.fillStyle = '#2a1a12'; cx.fillRect(Math.round(b.x - rx * 0.78), bot, Math.max(1, Math.round(rx * 1.56)), 1);
     // handle
