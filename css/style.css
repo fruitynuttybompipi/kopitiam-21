@@ -91,6 +91,13 @@ input::placeholder { color: #7d6c50; }
 .chit-foot { margin-top: 14px; padding-top: 8px; border-top: 3px dashed var(--ink); display: flex; justify-content: space-between; align-items: center; font-size: 16px; color: #6e5a40; gap: 8px; flex-wrap: wrap; }
 .link { background: none; border: 0; font-family: var(--px); font-size: 11px; color: var(--blue); text-decoration: underline; padding: 4px 0; }
 
+/* ---------- name + dice ---------- */
+.name-row { display: flex; gap: 8px; }
+.name-row input { flex: 1; min-width: 0; }
+.btn.dice { width: 52px; padding: 0; background-size: 30px; background-position: center; background-repeat: no-repeat; image-rendering: pixelated; }
+.btn.dice.roll { animation: diceRoll .45s steps(4); }
+@keyframes diceRoll { 0% { transform: rotate(0); } 50% { transform: rotate(180deg) scale(1.15); } 100% { transform: rotate(360deg); } }
+
 /* ---------- game picker ---------- */
 .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .pick.mode { padding: 12px 6px 10px; align-items: center; text-align: center; }

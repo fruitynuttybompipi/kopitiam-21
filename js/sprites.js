@@ -370,7 +370,25 @@
     return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
   }
 
-  const api = { AVATARS, DRINKS, SUITS, SUIT_PAL, CHIPS, avatarRows, blinkRows, drawGrid, avatarSheet, avatarStill, drink, suit, chip, shade };
+  // Random names that fit each avatar (Auntie, Makcik and Office Girl get female names only)
+  const NAMES = {
+    ahpek: ['Uncle Lim', 'Uncle Tan', 'Uncle Chong', 'Ah Pek Wong', 'Uncle Lee', 'Ah Kow', 'Uncle Ong', 'Ah Hock'],
+    auntie: ['Auntie Mary', 'Auntie Lily', 'Auntie Rosie', 'Auntie Mei', 'Auntie Susan', 'Auntie Ah Lian', 'Auntie Jenny', 'Auntie Grace'],
+    ahboy: ['Ah Boy', 'Ah Beng', 'Ah Seng', 'Kok Wai', 'Jun Hao', 'Wei Jie', 'Ah Keong', 'Kenny'],
+    makcik: ['Makcik Kiah', 'Makcik Timah', 'Makcik Som', 'Kak Ros', 'Makcik Esah', 'Kak Yati', 'Makcik Gayah', 'Kak Wani'],
+    anneh: ['Anneh Muthu', 'Raju', 'Anand', 'Ravi', 'Siva', 'Kumar', 'Bala', 'Anneh Mani'],
+    officegirl: ['Mei Ling', 'Siti', 'Jessica', 'Nurul', 'Priya', 'Farah', 'Su Lin', 'Kavitha', 'Sharon', 'Aishah'],
+    rider: ['Abang Mat', 'Zul', 'Hafiz', 'Amir', 'Abang Din', 'Faiz', 'Abang Lan', 'Izwan'],
+    kucing: ['Oyen', 'Comot', 'Tompok', 'Bulu', 'Kiki', 'Gemok', 'Mimi', 'Si Belang'],
+  };
+  function randomName(avatar, avoid) {
+    const list = NAMES[avatar] || NAMES.ahboy;
+    const free = list.filter(n => !(avoid && (avoid.has ? avoid.has(n) : avoid.includes(n))));
+    const pool = free.length ? free : list;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  const api = { NAMES, randomName, AVATARS, DRINKS, SUITS, SUIT_PAL, CHIPS, avatarRows, blinkRows, drawGrid, avatarSheet, avatarStill, drink, suit, chip, shade };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SPR = api;
 })(this);

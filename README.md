@@ -1,6 +1,6 @@
-# Kopitiam 21 · Blackjack & Telur Pong
+# Kopitiam 21 · Uncle Jack 21 & Telur Pong
 
-A pixel-art multiplayer blackjack game set in a Malaysian kopitiam. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with two modes: **Uncle Jack 21** (blackjack) and **Telur Pong**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -27,7 +27,7 @@ Pick **TELUR PONG** on the first screen before tapping BUKA MEJA.
 - The first to sink all 6 of the other player's cups wins. The host can tap **REMATCH**, and the loser throws first.
 - Playing alone? The host can add a bot.
 
-## Blackjack house rules
+## Uncle Jack 21 house rules
 
 - Everyone starts with **1000 chips**. These are play chips only, with no real money.
 - Blackjack pays 3:2. Insurance pays 2:1. The Tauke stands on 17. You can double on any two cards, and split up to 4 hands.
@@ -43,13 +43,13 @@ Pick **TELUR PONG** on the first screen before tapping BUKA MEJA.
 
 ## Testing alone
 
-Open `index.html?offline&autohost&bots=4&autostart` for Blackjack against 4 bots, or `index.html?offline&autohost&bots=1&autostart&mode=pong` for Telur Pong against a bot. No network is used.
+Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 bots, or `index.html?offline&autohost&bots=1&autostart&mode=pong` for Telur Pong against a bot. No network is used.
 
 ## Files
 
 | File | What it does |
 |---|---|
-| `js/engine.js` | Blackjack rules and round flow. Runs on the host. |
+| `js/engine.js` | Uncle Jack 21 (blackjack) rules and round flow. Runs on the host. |
 | `js/pong.js` | Telur Pong rules, turns and egg physics. Runs on the host. |
 | `js/pongview.js` | Telur Pong table view, flying eggs and swipe controls. |
 | `js/net.js` | Room codes and connections through the relay (MQTT). |

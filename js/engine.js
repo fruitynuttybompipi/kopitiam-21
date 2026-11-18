@@ -146,10 +146,12 @@
     }
     addBot() {
       const used = new Set(this.s.players.map(x => x.name));
-      const name = BOT_NAMES.find(n => !used.has(n)) || 'Bot ' + this.s.players.length;
+      const avatar = this.pick(AVATAR_IDS);
+      const S = typeof root !== 'undefined' && root.SPR;
+      const name = (S && S.randomName) ? S.randomName(avatar, used) : (BOT_NAMES.find(n => !used.has(n)) || 'Bot ' + this.s.players.length);
       return this.addPlayer({
         id: 'bot-' + Math.floor(this.rng() * 1e9).toString(36), name,
-        avatar: this.pick(AVATAR_IDS), drink: this.pick(DRINK_IDS), isBot: true,
+        avatar, drink: this.pick(DRINK_IDS), isBot: true,
       });
     }
     removePlayer(id) {

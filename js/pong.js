@@ -151,7 +151,9 @@
     }
     addBot() {
       const used = new Set(this.s.players.map(p => p.name));
-      return this.addPlayer({ id: 'bot-' + Math.floor(this.rng() * 1e9).toString(36), name: BOT_NAMES.find(n => !used.has(n)) || 'Uncle Bot', avatar: this.pick(AV), drink: this.pick(DR), isBot: true });
+      const avatar = this.pick(AV), S = typeof root !== 'undefined' && root.SPR;
+      const name = (S && S.randomName) ? S.randomName(avatar, used) : (BOT_NAMES.find(n => !used.has(n)) || 'Uncle Bot');
+      return this.addPlayer({ id: 'bot-' + Math.floor(this.rng() * 1e9).toString(36), name, avatar, drink: this.pick(DR), isBot: true });
     }
     removePlayer(id) { this.disconnect(id); }
     disconnect(id) {

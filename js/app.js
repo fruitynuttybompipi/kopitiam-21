@@ -17,7 +17,7 @@
   let pid = null;
   try { pid = sessionStorage.getItem('k21pid'); } catch (e) {}
   if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 10); try { sessionStorage.setItem('k21pid', pid); } catch (e) {} }
-  const me = { mode: store.get('mode', 'bj'), id: pid, name: store.get('name', ''), avatar: store.get('avatar', BJ.AVATAR_IDS[Math.floor(Math.random() * 8)]), drink: store.get('drink', 'tehtarik') };
+  const me = { nameAuto: store.get('nameAuto', false), mode: store.get('mode', 'bj'), id: pid, name: store.get('name', ''), avatar: store.get('avatar', BJ.AVATAR_IDS[Math.floor(Math.random() * 8)]), drink: store.get('drink', 'tehtarik') };
 
   // ---------- generated pixel assets ----------
   function gridURL(rows, pal, scale) {
@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v5';
+  const VERSION = 'v6';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -60,7 +60,11 @@
       const b = el('button', 'pick' + (id === me.avatar ? ' sel' : ''));
       b.type = 'button'; b.title = SPR.AVATARS[id].name;
       b.innerHTML = `<span class="av" style="background-image:url(${SPR.avatarSheet(id)});animation-delay:-${(Math.random() * 4).toFixed(2)}s"></span><small>${esc(SPR.AVATARS[id].name)}</small>`;
-      b.onclick = () => { me.avatar = id; store.set('avatar', id); $$('.pick', ag).forEach(x => x.classList.toggle('sel', x === b)); AU.unlock(); AU.play('pop'); };
+      b.onclick = () => {
+        me.avatar = id; store.set('avatar', id); $$('.pick', ag).forEach(x => x.classList.toggle('sel', x === b)); AU.unlock(); AU.play('pop');
+        // a dice-made name follows the avatar (so Auntie gets an auntie name); a typed name stays
+        if (me.nameAuto) { me.name = SPR.randomName(id); $('#nameIn').value = me.name; store.set('name', me.name); }
+      };
       ag.appendChild(b);
     }
     const dg = $('#drinkGrid');
@@ -78,8 +82,20 @@
       b.onclick = () => { me.mode = b.dataset.mode; store.set('mode', me.mode); $$('.mode', mg).forEach(x => x.classList.toggle('sel', x === b)); AU.unlock(); AU.play('pop'); };
     });
     const nameIn = $('#nameIn');
+    // first visit: start with a random name that fits the avatar
+    if (!me.name) { me.name = SPR.randomName(me.avatar); me.nameAuto = true; store.set('name', me.name); store.set('nameAuto', true); }
     nameIn.value = me.name;
-    nameIn.oninput = () => { me.name = BJ.clean(nameIn.value); store.set('name', me.name); };
+    nameIn.oninput = () => { me.name = BJ.clean(nameIn.value); me.nameAuto = false; store.set('name', me.name); store.set('nameAuto', false); };
+    const dice = $('#btnDice');
+    dice.style.backgroundImage = `url(${DICE})`;
+    dice.onclick = () => {
+      AU.unlock(); AU.play('roll');
+      dice.classList.remove('roll'); void dice.offsetWidth; dice.classList.add('roll');
+      let n;
+      do { n = SPR.randomName(me.avatar); } while (n === me.name && SPR.NAMES[me.avatar].length > 1);
+      me.name = n; me.nameAuto = true; nameIn.value = n;
+      store.set('name', n); store.set('nameAuto', true);
+    };
     const codeIn = $('#codeIn');
     codeIn.oninput = () => { codeIn.value = codeIn.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4); };
     const room = (params.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
@@ -1095,7 +1111,7 @@
         <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
       return;
     }
-    showOverlay(`<div class="modal"><h2>HOW TO PLAY · CARA MAIN</h2>
+    showOverlay(`<div class="modal"><h2>UNCLE JACK 21 · CARA MAIN</h2>
       <ul>
         <li>Get closer to <b>21</b> than the <b>Tauke</b> (dealer) without going over.</li>
         <li>J, Q, K = 10. Ace = 1 or 11.</li>
@@ -1174,7 +1190,7 @@
     if (!G || !G.code) return;
     AU.play('click');
     const url = location.origin + location.pathname + '?room=' + G.code;
-    const text = 'Jom main blackjack kat Kopitiam 21! Meja ' + G.code;
+    const text = 'Jom main ' + (G.state && G.state.game === 'pong' ? 'Telur Pong' : 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
     if (navigator.share) { navigator.share({ title: 'Kopitiam 21', text, url }).catch(() => {}); return; }
     const done = () => toast('Link copied! Paste to your friends');
     if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(done, () => toast('Code: ' + G.code));
