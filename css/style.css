@@ -14,6 +14,9 @@
 html, body { margin: 0; height: 100%; background: #3b2416; color: var(--ink); font-family: var(--vt); font-size: 20px; overflow: hidden; }
 img, .av, .drink, canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 button { font: inherit; cursor: pointer; color: inherit; touch-action: manipulation; }
+/* long-press on phones must not select text, pop the callout menu or act as a right-click */
+#game, #home, canvas, button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 .hidden { display: none !important; }
 
 :root { --z: 1; }

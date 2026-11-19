@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v21';
+  const VERSION = 'v22';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -1709,7 +1709,8 @@
   const holdEnd = () => { $$('#controls [data-hold]').forEach(b => b.classList.remove('on')); KV.release(); };
   window.addEventListener('pointerup', holdEnd);
   window.addEventListener('pointercancel', holdEnd);
-  $('#controls').addEventListener('contextmenu', e => { if (e.target.closest('[data-hold]')) e.preventDefault(); });
+  // long-press = contextmenu on phones (it can also cancel a held pour); block it everywhere except text boxes
+  document.addEventListener('contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
   window.addEventListener('keydown', e => { if (e.code === 'Space' && !e.repeat && KV.isMine() && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); KV.press(); } });
   window.addEventListener('keyup', e => { if (e.code === 'Space') KV.release(); });
   PV.onAim = p => {
