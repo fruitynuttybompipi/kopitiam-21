@@ -8,7 +8,7 @@
 <meta name="description" content="Uncle Jack 21 and Telur Pong with friends at the kopitiam. Huat ah!">
 <link rel="preload" href="fonts/PressStart2P.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/VT323.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/style.css?v=202611182313">
+<link rel="stylesheet" href="css/style.css?v=202611191733">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect x='3' y='5' width='8' height='8' fill='%23fbfbf4'/><rect x='3' y='5' width='8' height='2' fill='%233a2010'/><rect x='11' y='7' width='2' height='4' fill='%23fbfbf4'/><rect x='2' y='13' width='11' height='2' fill='%233fae6a'/></svg>">
 </head>
 <body>
@@ -20,7 +20,7 @@
     <div class="chain l"></div><div class="chain r"></div>
     <h1 class="sign"><span>KOPITIAM</span> <b>21</b></h1>
   </div>
-  <p class="tagline">4 games · Jom main!</p>
+  <p class="tagline">5 games · Jom main!</p>
 
   <div class="chit">
     <div class="chit-head"><span>ORDER CHIT</span><span>No. 21</span></div>
@@ -31,6 +31,7 @@
       <button class="pick mode" data-mode="kopi" type="button"><b>KOPI TUMPAH</b><small>2–6 · don't spill!</small></button>
       <button class="pick mode" data-mode="order" type="button"><b>INGAT ORDER</b><small>1–6 · memory</small></button>
       <button class="pick mode" data-mode="egg" type="button"><b>CARI TELUR</b><small>1–6 · find the egg</small></button>
+      <button class="pick mode wide" data-mode="tarik" type="button"><b>TARIK TEH</b><small>1–6 · tarik tinggi, jangan tumpah!</small></button>
       <button class="pick mode wide secret hidden" data-mode="bj" type="button"><b>UNCLE JACK 21</b><small>Rahsia! 2–6 players · Tauke deals</small></button>
     </div>
 
@@ -103,6 +104,10 @@
       <canvas id="eggCanvas"></canvas>
       <div class="eg-top"><div class="oq"></div><div class="o-head"><b class="o-level"></b><span class="o-who"></span></div></div>
     </div>
+    <div id="tarikView" class="hidden">
+      <canvas id="tarikCanvas"></canvas>
+      <div class="kq"></div>
+    </div>
     <div id="kopiView" class="hidden">
       <canvas id="kopiCanvas"></canvas>
       <div class="kq"></div>
@@ -122,21 +127,23 @@
 <div id="status" class="hidden"></div>
 <div id="toast"></div>
 
-<script src="js/vendor/mqtt.min.js?v=202611182313"></script>
-<script src="js/sprites.js?v=202611182313"></script>
-<script src="js/pong.js?v=202611182313"></script>
-<script src="js/kopi.js?v=202611182313"></script>
-<script src="js/order.js?v=202611182313"></script>
-<script src="js/egg.js?v=202611182313"></script>
-<script src="js/engine.js?v=202611182313"></script>
-<script src="js/audio.js?v=202611182313"></script>
-<script src="js/scene.js?v=202611182313"></script>
-<script src="js/config.js?v=202611182313"></script>
-<script src="js/pongview.js?v=202611182313"></script>
-<script src="js/kopiview.js?v=202611182313"></script>
-<script src="js/orderview.js?v=202611182313"></script>
-<script src="js/eggview.js?v=202611182313"></script>
-<script src="js/net.js?v=202611182313"></script>
-<script src="js/app.js?v=202611182313"></script>
+<script src="js/vendor/mqtt.min.js?v=202611191733"></script>
+<script src="js/sprites.js?v=202611191733"></script>
+<script src="js/pong.js?v=202611191733"></script>
+<script src="js/kopi.js?v=202611191733"></script>
+<script src="js/order.js?v=202611191733"></script>
+<script src="js/egg.js?v=202611191733"></script>
+<script src="js/tarik.js?v=202611191733"></script>
+<script src="js/engine.js?v=202611191733"></script>
+<script src="js/audio.js?v=202611191733"></script>
+<script src="js/scene.js?v=202611191733"></script>
+<script src="js/config.js?v=202611191733"></script>
+<script src="js/pongview.js?v=202611191733"></script>
+<script src="js/kopiview.js?v=202611191733"></script>
+<script src="js/orderview.js?v=202611191733"></script>
+<script src="js/eggview.js?v=202611191733"></script>
+<script src="js/tarikview.js?v=202611191733"></script>
+<script src="js/net.js?v=202611191733"></script>
+<script src="js/app.js?v=202611191733"></script>
 </body>
 </html>

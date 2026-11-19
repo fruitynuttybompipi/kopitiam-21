@@ -1,6 +1,6 @@
-# Kopitiam 21 · 5 kopitiam games
+# Kopitiam 21 · 6 kopitiam games
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with five games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order** and **Cari Telur**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with six games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur** and **Tarik Teh**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -57,6 +57,16 @@ Pick **CARI TELUR** on the first screen before tapping BUKA MEJA. You can also p
 - 10 levels: 3 bowls at first, then 4, 5 and finally 6 bowls, faster each level. From level 6 some bowls jump over others and some swaps are fakes.
 - The next level starts by itself after the reveal; the host can tap NEXT to skip ahead.
 
+## Tarik Teh (1–6 players)
+
+Pick **TARIK TEH** on the first screen before tapping BUKA MEJA. You can also play alone.
+
+- Players take turns, one pull each, for 3 rounds.
+- Press and hold on the mugs to pour. While you hold, the top mug keeps rising: higher means more buih (froth) per second, but the stream swings more.
+- Slide left and right to keep the bottom mug under the stream. On a computer you can also hold Space and use the arrow keys.
+- Teh that misses fills the TUMPAH bar. If it fills up, that pull scores 0. Let go any time to keep your buih.
+- Pour the whole mug with almost no spill for a SEMPURNA bonus of 25. The most buih after 3 rounds wins.
+
 ## Uncle Jack 21 (secret game)
 
 Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it.
@@ -92,6 +102,8 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/orderview.js` | Ingat Order customers, speech bubbles, tablet and food/drink icons. |
 | `js/egg.js` | Cari Telur levels, shuffle scripts and scoring. Runs on the host. |
 | `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
+| `js/tarik.js` | Tarik Teh turns, pour physics, bots and scoring. Runs on the host. |
+| `js/tarikview.js` | Tarik Teh mugs, swaying stream, height ruler and your own pull. |
 | `js/net.js` | Room codes and connections through the relay (MQTT). |
 | `js/config.js` | Which relay servers to use. |
 | `js/app.js` | Screens, rendering and animations. |
