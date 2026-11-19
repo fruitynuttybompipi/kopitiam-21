@@ -7,7 +7,7 @@
 
   // shared pour physics (view + bots)
   const P = {
-    RISE: 0.22,       // height per second while holding (0 = mugs touching, 1 = arm fully up)
+    RISE: 0.182,       // height per second while holding (0 = mugs touching, 1 = arm fully up)
     DRAIN: 0.18,      // tea per second out of the top mug (starts at 1)
     MUG: 0.24,        // half-width of the bottom mug (normalised, mug moves in -1..1)
     TUMPAH: 0.3,     // spilled this much tea = tumpah, no buih for this pull
