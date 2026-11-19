@@ -7,18 +7,18 @@
 
   // shared pour physics (view + bots)
   const P = {
-    RISE: 0.3,        // height per second while holding (0 = mugs touching, 1 = arm fully up)
-    DRAIN: 0.24,      // tea per second out of the top mug (starts at 1)
-    MUG: 0.2,         // half-width of the bottom mug (normalised, mug moves in -1..1)
-    TUMPAH: 0.25,    // spilled this much tea = tumpah, no buih for this pull
+    RISE: 0.22,       // height per second while holding (0 = mugs touching, 1 = arm fully up)
+    DRAIN: 0.18,      // tea per second out of the top mug (starts at 1)
+    MUG: 0.24,        // half-width of the bottom mug (normalised, mug moves in -1..1)
+    TUMPAH: 0.3,     // spilled this much tea = tumpah, no buih for this pull
     PERFECT: 25,      // bonus for pouring the whole mug without (much) spill
     MAXPTS: 160,
     // buih per second while the stream lands in the mug
-    rate(h) { return 6 + 58 * Math.pow(h, 1.5); },
+    rate(h) { return 5 + 42 * Math.pow(h, 1.5); },
     // where the stream lands (-1..1) at time t into the pull, for height h; seed varies the dance
     land(t, h, seed) {
-      const A = 0.05 + 0.72 * h;
-      const w = 1.8 + 3.0 * h;
+      const A = 0.05 + 0.66 * h;
+      const w = 1.4 + 2.4 * h;
       const ph = t * w * (1 + 0.25 * Math.sin(t * 0.9 + seed * 7));
       return A * (0.72 * Math.sin(ph + seed * 11) + 0.28 * Math.sin(ph * 1.73 + seed * 3));
     },
@@ -230,7 +230,7 @@
       if (S.phase !== 'tarik' || !tr || tr.pid !== pid) return;
       this.clearTimer();
       const skill = 0.55 + this.rng() * 0.4;
-      const hold = 1.2 + this.rng() * 3.2;       // seconds; 4.2+ pours the whole mug
+      const hold = 1.5 + this.rng() * 4.4;       // seconds; 5.6+ pours the whole mug
       let t = 0, h = 0, tea = 1, fr = 0, sp = 0, m = 0, l = 0;
       const dt = 0.05;
       const tick = () => {
@@ -241,7 +241,7 @@
           // a bot's hand trails the stream; worse bots trail more
           const lagT = Math.max(0, t - (0.06 + (1 - skill) * 0.22));
           const want = P.land(lagT, h, tr.seed) + (this.rng() - 0.5) * (1 - skill) * 0.3;
-          m += (want - m) * Math.min(1, dt * 14);
+          m += (want - m) * Math.min(1, dt * 18);
           const miss = Math.abs(l - m) > P.MUG;
           if (miss) sp += P.DRAIN * dt; else fr += P.rate(h) * dt;
         }

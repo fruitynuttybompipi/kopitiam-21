@@ -50,7 +50,7 @@
     local.h = Math.min(1, local.h + P.RISE * dt);
     local.tea = Math.max(0, local.tea - P.DRAIN * dt);
     local.l = P.land(local.t, local.h, local.seed);
-    local.m += (target - local.m) * Math.min(1, dt * 14);
+    local.m += (target - local.m) * Math.min(1, dt * 18);
     local.miss = Math.abs(local.l - local.m) > P.MUG;
     if (local.miss) local.sp += P.DRAIN * dt; else local.fr += P.rate(local.h) * dt;
     if (local.tea <= 0 || local.sp >= P.TUMPAH) { finishLocal(); return; }
