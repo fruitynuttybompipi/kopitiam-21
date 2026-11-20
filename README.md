@@ -1,6 +1,6 @@
-# Kopitiam 21 · 10 kopitiam games
+# Kopitiam 21 · 11 kopitiam games
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with ten games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit**, **Lalat Hunt**, **Mamak Mahjong** and **Roti Flip**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with eleven games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit**, **Lalat Hunt**, **Mamak Mahjong**, **Lami** and **Roti Flip**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -108,9 +108,21 @@ Pick **ROTI FLIP** on the first screen before tapping BUKA MEJA. You can also pl
 - 10 or more flips is a Roti Tisu, worth 20 extra. Round 3 is Roti Telur and every score counts double. Most points after 3 rounds wins.
 - On a computer, Space flips and Enter is LETAK.
 
+## Lami (secret game, 2–4 players)
+
+Penang rummy (Si Rummy), unlocked with the same 9 taps on the signboard.
+
+- 2 packs plus 8 jokers. Everyone gets 20 cards (25 with 3 players), and only you see yours.
+- No drawing and no discarding. On your turn you must make a meld or lay off onto any meld on the table, as many times as you like, then press HABIS.
+- A run is 3 or more of the same suit in order (A-2-3 or J-Q-K-A, no wrap). A set is 3 or more of the same rank; suits can repeat. Jokers are wild.
+- Your first meld is your passport and must be a run. If you can't make one, you are dead (MATI) for that hand.
+- Tap cards to pick them, then MELD, or tap a meld on the table to add them. One card that matches a joker on the table swaps the joker back to you.
+- If you can't meld or lay off on your turn, you are MATI and sit out with what's left.
+- Empty your hand to win the hand (GAME!). Everyone else counts what's left: A 15, 10/J/Q/K 10, 2–9 face value, Joker 20. 4 hands; lowest total wins.
+
 ## Uncle Jack 21 (secret game)
 
-Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it (this also unlocks Mamak Mahjong).
+Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it (this also unlocks Mamak Mahjong and Lami).
 
 ### House rules
 
@@ -145,6 +157,8 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
 | `js/roti.js` | Roti Flip timing rules, rounds, flip checks, scoring and bots. Runs on the host. |
 | `js/rotiview.js` | Roti Flip counter, dough, timing ring, tawa and your own flips. |
+| `js/lami.js` | Lami rules (runs, sets, jokers, passport, MATI), turns, scoring and bots. Runs on the host; hands are private. |
+| `js/lamiview.js` | Lami table melds, your card rack, picking and laying off. |
 | `js/mamak.js` | Mamak Mahjong tiles, turns, CHOP/MAKAN claims, scoring and bots. Runs on the host; each hand is sent only to its owner. |
 | `js/mamakview.js` | Mamak Mahjong table, discard pool, open sets and your tile rack. |
 | `js/lalat.js` | Lalat Hunt fly paths, table layout, swat checking and scoring. Runs on the host. |

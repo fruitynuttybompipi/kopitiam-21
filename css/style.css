@@ -626,3 +626,37 @@ input::placeholder { color: #7d6c50; }
   .m-row { gap: 2px; }
 }
 @media (max-width: 380px) { .mt { width: 36px; height: 50px; } .mt img { width: 24px; height: 24px; } }
+
+/* ---------- Lami ---------- */
+#lamiView { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 8px 6px; gap: 6px; overflow: hidden; }
+#lamiView .oq { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.l-table { flex: 1 1 auto; min-height: 120px; }
+.l-melds { display: flex; flex-wrap: wrap; gap: 6px 10px; align-content: flex-start; }
+.l-meld { border: 0; background: rgba(0,0,0,.18); padding: 3px 5px 4px; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; box-shadow: inset 0 0 0 1px #24553a; color: #bfe0c0; }
+.l-meld i { font-style: normal; font-size: 13px; line-height: 1; }
+.l-meld span { display: flex; }
+.l-meld .lc + .lc { margin-left: -9px; }
+.l-meld.live { cursor: pointer; box-shadow: inset 0 0 0 2px var(--gold); }
+.l-meld.live:hover { background: rgba(246,199,68,.2); }
+.l-res { display: flex; flex-direction: column; gap: 3px; }
+.l-rrow { display: flex; align-items: center; gap: 8px; font-size: 16px; flex-wrap: wrap; }
+.l-rrow b { color: var(--gold); font-family: var(--px); font-size: 9px; }
+.l-left { display: flex; } .l-left .lc + .lc { margin-left: -10px; }
+.l-mine { max-height: 46%; }
+.l-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 6px; color: var(--cream); font-size: 16px; min-height: 22px; }
+.l-bar .ok { color: #7cff9a; font-family: var(--px); font-size: 9px; }
+.l-sort { border: 0; font-family: var(--px); font-size: 8px; background: #3b2416; color: var(--gold); padding: 5px 6px; box-shadow: inset 0 0 0 2px var(--ink); flex: none; }
+.l-row { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; padding-top: 8px; overflow-y: auto; min-height: 0; }
+.lc { position: relative; display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; width: 34px; height: 48px; padding: 3px 0 0 4px; border: 0; background: #fffdf6; box-shadow: inset 0 0 0 2px var(--ink), inset -2px -2px 0 2px #e6dcc6; color: #1c1c28; line-height: 1; flex: none; }
+.lc b { font-family: var(--px); font-size: 10px; letter-spacing: -1px; }
+.lc img { width: 14px; height: 14px; image-rendering: pixelated; margin-top: 3px; }
+.lc.red { color: #d42a2a; }
+.lc.jk { background: #fff2b0; color: #b45ad1; }
+.lc.jk small { font-family: var(--px); font-size: 5px; margin-top: 6px; color: #c0392b; }
+.lc .ghost { opacity: .45; }
+.lc.live { cursor: pointer; }
+.lc.sel { transform: translateY(-8px); box-shadow: inset 0 0 0 2px var(--ink), 0 0 0 3px var(--gold); }
+.lc.xs { width: 22px; height: 30px; padding: 2px 0 0 2px; box-shadow: inset 0 0 0 1px var(--ink); }
+.lc.xs b { font-size: 7px; } .lc.xs img { width: 9px; height: 9px; margin-top: 2px; } .lc.xs small { display: none; }
+#lamiView.myturn .l-mine { box-shadow: inset 0 0 0 3px var(--ink), inset 0 4px 0 3px #8a5a34, 0 0 0 3px var(--gold), 0 5px 0 rgba(0,0,0,.3); }
+@media (max-width: 640px) { .lc { width: 30px; height: 42px; padding-left: 3px; } .lc b { font-size: 9px; } .lc img { width: 12px; height: 12px; } }
