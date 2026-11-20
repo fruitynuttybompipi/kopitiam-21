@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v25';
+  const VERSION = 'v26';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -1369,7 +1369,7 @@
            <div class="ctl-row">${n < LALAT.MAX ? '<button class="btn fixed" data-act="addBot">+ BOT</button>' : ''}
            <button class="btn red big" data-act="start">START!<small>${n < 2 ? 'Main sorang pun boleh' : 'Pap pap pap'}</small></button></div>
            <div class="ctl-hint">${n < LALAT.MAX ? 'Share code ' + esc(s.code || '') + ' · ' : ''}${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
-        : `<div class="ctl-info">Lalat Hunt · waiting for host to <b>START</b></div><div class="ctl-hint">Swat landed flies. Jangan kena pinggan or kucing!</div>`;
+        : `<div class="ctl-info">Lalat Hunt · waiting for host to <b>START</b></div><div class="ctl-hint">Swat the flies. Jangan kena pinggan!</div>`;
     } else if (ph === 'over') {
       const w = s.players.find(p => p.id === s.winner);
       html = `<div class="ctl-info"><b>${esc(w ? w.name : '?')}</b> Raja Lalat!</div>
@@ -1378,9 +1378,9 @@
       const best = s.players.filter(p => p.inGame).sort((a, b) => (b.roundKills || 0) - (a.roundKills || 0))[0];
       html = `<div class="ctl-info">${rnd} habis! ${best && best.roundKills ? '<b>' + esc(best.name) + '</b> pap ' + best.roundKills + ' lalat' : 'Lalat menang round ni...'}</div>`;
     } else if (ph === 'ready') {
-      html = `<div class="ctl-info">${rnd} · <b>Siap sedia...</b></div><div class="ctl-hint">${s.rnd === 3 ? 'SWARM! And the cat is walking around...' : s.rnd === 2 ? 'More lalat, plates moved' : 'Tap a fly when it lands'}</div>`;
+      html = `<div class="ctl-info">${rnd} · <b>Siap sedia...</b></div><div class="ctl-hint">${s.rnd === 3 ? 'SWARM!' : s.rnd === 2 ? 'More lalat, plates moved' : 'Tap the flies — flying or landed'}</div>`;
     } else {
-      html = `<div class="ctl-info">${rnd} · <b>Pap!</b> Tap landed lalat</div><div class="ctl-hint">${meP && !meP.inGame ? 'You join next game — tengok je' : 'Lalat +10 · langau hijau +25 · emas +50 · pinggan −15 · kucing −30'}</div>`;
+      html = `<div class="ctl-info">${rnd} · <b>Pap!</b> Tap the lalat</div><div class="ctl-hint">${meP && !meP.inGame ? 'You join next game — tengok je' : 'Lalat +10 · langau hijau +25 · emas +50 · pinggan/cawan −15'}</div>`;
     }
     setCtl(box, key, html);
   }
@@ -1391,7 +1391,7 @@
       case 'say': bubble(f.pid, f.text, f.mood); break;
       case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
       case 'banner': showBanner(f.text, f.style); break;
-      case 'oops': if (f.pid === me.id) { shakeScreen(); vibrate(f.tgt === 'cat' ? [60, 40, 60] : 60); } mood(avatarOf(f.pid), 'sad'); break;
+      case 'oops': if (f.pid === me.id) { shakeScreen(); vibrate(60); } mood(avatarOf(f.pid), 'sad'); break;
       case 'kill': if (f.pid === me.id) vibrate(25); break;
       case 'roundEnd': AU.play('win'); if (f.best) mood(avatarOf(f.best), 'happy'); break;
       case 'gameover': confetti(); AU.play(f.winner === me.id ? 'tada' : 'win'); break;
@@ -1654,8 +1654,8 @@
       <ul><li>Follow the egg under the shuffling bowls, then everyone taps a bowl at the same time.</li>
       <li>10 levels, 3 up to 6 bowls. 100 points per egg found, plus a bonus for picking fast.</li></ul>
       <h3>LALAT HUNT · 1–6 players</h3>
-      <ul><li>Flies land on the table. <b>Tap a landed fly</b> to swat it with your selipar — first hit wins it. Flies in the air dodge.</li>
-      <li>Lalat +10, green langau +25, gold +50. Hit a plate or cup −15, the cat −30 (and you're pening for 1 s). 3 rounds of 30 s.</li></ul>
+      <ul><li>Flies buzz over the table. <b>Tap a fly</b> — flying or landed — to swat it with your selipar. First hit wins it.</li>
+      <li>Lalat +10, green langau +25, gold +50. Hit a plate or cup −15. 3 rounds of 30 s.</li></ul>
       <h3>KIRA DUIT · 1–6 players</h3>
       <ul><li>A customer pays at the counter. Everyone works out the <b>baki</b> (change) at the same time and taps notes and coins, then <b>BAGI BAKI</b>.</li>
       <li>Right baki scores 100 for the fastest, then 75, 60... Fewest pieces gets +10. Wrong = 0. 10 customers, harder each time.</li></ul>
@@ -1697,12 +1697,12 @@
     if (G && G.state && G.state.game === 'lalat') {
       showOverlay(`<div class="modal"><h2>LALAT HUNT · CARA MAIN</h2>
         <ul>
-          <li>Flies buzz around the kopitiam table and <b>land</b> for a moment. Everyone plays at the same time.</li>
-          <li><b>Tap a landed fly</b> to swat it with your selipar. The first player to hit it gets the points. Flies in the air dodge you!</li>
+          <li>Flies buzz around the kopitiam table and land for a moment. Everyone plays at the same time.</li>
+          <li><b>Tap a fly</b> to swat it with your selipar — flying or landed. Landed ones are easier to hit! The first player to hit it gets the points.</li>
           <li>Black lalat <b>+10</b> · fat green langau <b>+25</b> · golden lalat <b>+50</b> (rare and fast).</li>
-          <li>Miss and hit a <b>plate or cup −15</b> (pecah pinggan!). Hit the <b>cat −30</b>, and you're pening for 1 second.</li>
+          <li>Miss and hit a <b>plate or cup −15</b> (pecah pinggan!).</li>
           <li>Swatting empty table makes you wait a moment, so don't just spam.</li>
-          <li><b>3 rounds of 30 seconds.</b> Round 2 has more flies, round 3 is a swarm and the cat walks across the table. Most points wins Raja Lalat.</li>
+          <li><b>3 rounds of 30 seconds.</b> Round 2 has more flies, round 3 is a swarm. Most points wins Raja Lalat.</li>
         </ul>
         <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
       return;

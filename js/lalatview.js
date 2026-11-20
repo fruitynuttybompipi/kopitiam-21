@@ -1,5 +1,5 @@
-/* Kopitiam 21 — Lalat Hunt view: a marble kopitiam table seen from above, plates, kopi, the cat,
-   and lots of lalat. Tap a landed fly to swat it with your selipar. */
+/* Kopitiam 21 — Lalat Hunt view: a marble kopitiam table seen from above, plates, kopi
+   and lots of lalat. Tap a fly (flying or landed) to swat it with your selipar. */
 (function (root) {
   'use strict';
   const { LALAT, SPR, AU } = root;
@@ -105,17 +105,6 @@
       (FOOD[p.food] || FOOD.rojak)(x, y, r);
     }
   }
-  function drawCat(t, ht) {
-    const c = LALAT.catPos(st.layout, ht); if (!c) return;
-    const [x, y] = toS(c.x, c.y);
-    const sz = Math.max(1, Math.round(geo.k * 0.15 / 12));
-    const rows = SPR.avatarRows('kucing'), w = 12 * sz;
-    const walking = !!st.layout.cat.walk;
-    const bob = walking ? (Math.floor(t * 6) % 2) : 0;
-    disc(cx, x, y + w * 0.45, w * 0.45, 'rgba(0,0,0,.15)');
-    SPR.drawGrid(cx, rows.slice(0, 12), SPR.AVATARS.kucing.pal, Math.round(x - w / 2), Math.round(y - w / 2) - bob, sz);
-    if (stun > performance.now() && Math.floor(t * 8) % 2) { cx.fillStyle = '#f6c744'; cx.fillRect(Math.round(x - w / 2), Math.round(y - w / 2 - 4), 2, 2); cx.fillRect(Math.round(x + w / 2 - 2), Math.round(y - w / 2 - 3), 2, 2); }
-  }
   function drawFly(f, p, t) {
     const [x, y] = toS(p.x, p.y);
     const big = f.k === 'langau', gold = f.k === 'gold';
@@ -125,7 +114,7 @@
     if (!p.landed) {
       // shadow on the table, fly a little above it
       cx.fillStyle = 'rgba(0,0,0,.18)'; cx.fillRect(Math.round(x - bw / 2 + 2 * sz), Math.round(y + 4 * sz), bw, Math.max(1, sz));
-      const yy = Math.round(y - 3 * sz), wf = Math.floor(t * 30) % 2;
+      const yy = Math.round(y - bh / 2), wf = Math.floor(t * 30) % 2;
       cx.fillStyle = 'rgba(230,240,255,.85)';
       cx.fillRect(Math.round(x - bw / 2 - sz), yy - (wf ? 2 * sz : sz), sz * 2, sz);
       cx.fillRect(Math.round(x + bw / 2 - sz), yy - (wf ? 2 * sz : sz), sz * 2, sz);
@@ -184,7 +173,6 @@
         if (m.spill) disc(cx, x + m.spill[0], y + m.spill[1], m.spill[2], m.spillCol);
       }
     }
-    drawCat(t, ht);
     // flies
     if (st.phase === 'play') {
       let near = 0;
@@ -219,7 +207,6 @@
     // countdown
     if (st.phase === 'ready') { const n = Math.ceil(Math.max(0, -ht) / 1000); centerText(n > 0 ? String(n) : 'PAP!', '#c0392b', 4); }
     if (st.phase === 'break') centerText('ROUND ' + st.rnd + ' HABIS', '#4a3020', 2);
-    if (stun > now) centerText('PENING!', '#c0392b', 2, 0.3);
   }
   function centerText(txt, col, sc, yk) {
     sc = sc || 2;
@@ -243,8 +230,7 @@
     const hit = LALAT.hitTest(view(), x, y, ht, e.pointerType === 'touch' ? 0.025 : 0.01);
     slaps.push({ x, y, col: colOf(meId), at: now });
     AU.play('whoosh');
-    cool = now + (hit.tgt === 'fly' ? 150 : hit.tgt === 'cat' ? 1000 : 400);
-    if (hit.tgt === 'cat') stun = now + 1000;
+    cool = now + (hit.tgt === 'fly' ? 150 : 400);
     if (hit.tgt === 'fly') {
       // show the kill at once; the host confirms the points a moment later
       mine[hit.fid] = now;
@@ -287,8 +273,8 @@
     } else if (f.type === 'oops') {
       if (f.pid !== meId) slaps.push({ x: f.x, y: f.y, col: colOf(f.pid), at: now });
       pops.push({ x: f.x, y: f.y, text: String(f.pts), col: '#ff6b5b', at: now });
-      AU.play(f.tgt === 'cat' ? 'deny' : 'crack');
-      if (f.tgt !== 'cat') {
+      AU.play('crack');
+      {
         const path = []; let a = Math.random() * 6;
         for (let i = 0; i < 14; i++) { a += (Math.random() - 0.5) * 1.2; path.push([Math.round(Math.cos(a)), Math.round(Math.sin(a))]); }
         const sp = f.tgt === 'cup' ? [Math.round(Math.random() * 6 - 3), Math.round(Math.random() * 6 - 3), 3 + Math.random() * 3] : null;

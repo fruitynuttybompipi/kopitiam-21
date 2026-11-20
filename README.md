@@ -81,10 +81,10 @@ Pick **KIRA DUIT** on the first screen before tapping BUKA MEJA. You can also pl
 Pick **LALAT HUNT** on the first screen before tapping BUKA MEJA. You can also play alone.
 
 - Flies buzz around a kopitiam table seen from above and land for a moment. Everyone plays at the same time.
-- Tap a landed fly to swat it with your selipar. The first player to hit it gets the points. Flies in the air dodge.
+- Tap a fly, flying or landed, to swat it with your selipar. The first player to hit it gets the points. Landed flies are easier to hit.
 - Black lalat +10, fat green langau +25, rare golden lalat +50.
-- Missing and hitting a plate or cup is −15. Hitting the cat is −30 and you can't swat for 1 second. Swatting empty table makes you wait a moment.
-- 3 rounds of 30 seconds. Round 2 has more flies and new plates; round 3 is a swarm and the cat walks across the table.
+- Missing and hitting a plate or cup is −15. Swatting empty table makes you wait a moment.
+- 3 rounds of 30 seconds. Round 2 has more flies and new plates; round 3 is a swarm.
 
 ## Uncle Jack 21 (secret game)
 
@@ -122,7 +122,7 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/egg.js` | Cari Telur levels, shuffle scripts and scoring. Runs on the host. |
 | `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
 | `js/lalat.js` | Lalat Hunt fly paths, table layout, swat checking and scoring. Runs on the host. |
-| `js/lalatview.js` | Lalat Hunt table, flies, cat, selipar and splats. |
+| `js/lalatview.js` | Lalat Hunt table, flies, selipar and splats. |
 | `js/duit.js` | Kira Duit customers, prices, change checking and scoring. Runs on the host. |
 | `js/duitview.js` | Kira Duit counter, receipt, pixel money and cash drawer. |
 | `js/tarik.js` | Tarik Teh turns, pour physics, bots and scoring. Runs on the host. |

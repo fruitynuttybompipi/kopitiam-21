@@ -1,5 +1,5 @@
-/* Kopitiam 21 — Lalat Hunt: flies land on the kopitiam table, everyone races to swat them with a selipar.
-   Don't hit the plates or the cat. 3 rounds of 30 s. Host engine.
+/* Kopitiam 21 — Lalat Hunt: flies buzz over the kopitiam table, everyone races to swat them with a selipar.
+   Don't hit the plates. 3 rounds of 30 s. Host engine.
    The host plans every fly's whole path at the start of a round and publishes it; every browser plays the
    same paths against the host clock, and the host checks each swat against the plan. */
 (function (root) {
@@ -12,7 +12,7 @@
     langau: { pts: 25, r: 0.06, speed: 0.38, land: [800, 1200] },
     gold: { pts: 50, r: 0.05, speed: 1.0, land: [550, 800] },
   };
-  const OOPS = { plate: -15, cup: -15, cat: -30 };
+  const OOPS = { plate: -15, cup: -15 };
   const GRACE = 450;                       // ms after take-off a swat still counts (network lag)
 
   // shared helpers (view + host)
@@ -28,7 +28,7 @@
     }
     return null;
   }
-  // the cat: sits in a corner, or (round 3) strolls across the table and back
+  // (no cat any more; kept so old layouts with a cat still work)
   function catPos(lay, t) {
     const c = lay.cat; if (!c) return null;
     if (!c.walk) return { x: c.x, y: c.y };
@@ -37,20 +37,18 @@
     const e = u < 0.15 ? 0 : u > 0.85 ? 1 : (u - 0.15) / 0.7; // pauses at each end
     return { x: c.x + (c.x2 - c.x) * e, y: c.y + (c.y2 - c.y) * e + Math.sin(e * Math.PI) * 0.12 };
   }
-  // what is under (x, y) at time t: a landed fly first, then the cat, plates and cups
+  // what is under (x, y) at time t: a fly (landed or flying) first, then plates and cups
   function hitTest(s, x, y, t, slack) {
     slack = slack || 0;
     let best = null, bd = 1e9;
     for (const f of s.flies || []) {
       if (s.dead && s.dead[f.id]) continue;
-      const p = flyPos(f, t); if (!p || !p.landed) continue;
+      const p = flyPos(f, t); if (!p || p.x < 0 || p.y < 0 || p.x > TW || p.y > TH) continue;
       const d = Math.hypot(p.x - x, p.y - y);
       if (d < KIND[f.k].r + slack && d < bd) { bd = d; best = { tgt: 'fly', fid: f.id }; }
     }
     if (best) return best;
     const lay = s.layout; if (!lay) return { tgt: 'none' };
-    const c = catPos(lay, t);
-    if (c && Math.hypot(c.x - x, c.y - y) < 0.085) return { tgt: 'cat' };
     for (const p of lay.plates) if (Math.hypot(p.x - x, p.y - y) < p.r) return { tgt: p.cup ? 'cup' : 'plate', id: p.id };
     return { tgt: 'none' };
   }
@@ -60,7 +58,6 @@
     gold: ['LALAT EMAS!', 'Jackpot!', 'Huat ah!'],
     plate: ['Pecah pinggan!', 'Alamak nasi lemak!', 'Aiyo, tumpah kuah!'],
     cup: ['Kopi tumpah!', 'Habis kopi aku!'],
-    cat: ['MEOWRR!', 'Sorry kucing!', 'Ouch, cakar!'],
     win: ['Raja Lalat!', 'Selipar sakti!', 'Pembunuh lalat no. 1!'],
   };
   const AV = ['ahpek', 'auntie', 'ahboy', 'makcik', 'anneh', 'officegirl', 'rider', 'kucing'];
@@ -185,7 +182,7 @@
       this.changed();
     }
 
-    // ---------- the table: plates, cups and the cat ----------
+    // ---------- the table: plates and cups ----------
     makeLayout(rnd) {
       const plates = [];
       const n = rnd === 1 ? 3 : 4, cups = rnd === 1 ? 2 : 3;
@@ -199,10 +196,7 @@
       };
       for (let i = 0; i < n; i++) { const r = this.rnd(0.1, 0.12), at = place(r); if (at) plates.push({ id: 'p' + i, x: at.x, y: at.y, r, food: this.pick(foods) }); }
       for (let i = 0; i < cups; i++) { const r = 0.055, at = place(r); if (at) plates.push({ id: 'c' + i, x: at.x, y: at.y, r, cup: true, drink: this.pick(['kopi', 'teh', 'milo']) }); }
-      let cat;
-      if (rnd === 3) cat = { x: 0.15, y: 0.25, x2: TW - 0.15, y2: 0.75, walk: 14000 };
-      else { const corner = this.pick([[0.14, 0.16], [TW - 0.14, 0.16], [0.14, TH - 0.16], [TW - 0.14, TH - 0.16]]); cat = { x: corner[0], y: corner[1] }; }
-      return { plates, cat };
+      return { plates, cat: null };
     }
 
     // plan every fly for the round
@@ -220,11 +214,10 @@
         const legs = [];
         const stops = 1 + Math.floor(this.rng() * (rnd === 1 ? 2 : 3));
         for (let j = 0; j < stops; j++) {
-          // where to land: on food, next to the cat, or anywhere
+          // where to land: on the food, or anywhere
           let lx, ly;
           const q = this.rng();
-          if (q < 0.45 && lay.plates.length) { const p = this.pick(lay.plates); const a = this.rnd(0, Math.PI * 2), d = this.rnd(0, p.r * 0.7); lx = p.x + Math.cos(a) * d; ly = p.y + Math.sin(a) * d; }
-          else if (q < 0.62) { const c = catPos(lay, t + 1500) || { x: 0.8, y: 0.5 }; const a = this.rnd(0, Math.PI * 2); lx = c.x + Math.cos(a) * 0.13; ly = c.y + Math.sin(a) * 0.13; }
+          if (q < 0.5 && lay.plates.length) { const p = this.pick(lay.plates); const a = this.rnd(0, Math.PI * 2), d = this.rnd(0, p.r * 0.7); lx = p.x + Math.cos(a) * d; ly = p.y + Math.sin(a) * d; }
           else { lx = this.rnd(0.08, TW - 0.08); ly = this.rnd(0.08, TH - 0.08); }
           lx = Math.max(0.05, Math.min(TW - 0.05, lx)); ly = Math.max(0.05, Math.min(TH - 0.05, ly));
           const dist = Math.hypot(lx - x, ly - y);
@@ -250,20 +243,22 @@
       const S = this.s, pl = this.p(pid);
       if (S.phase !== 'play' || !pl || !pl.inGame) return;
       const now = this.now(), t = now - S.t0;
-      if (pl._stun && now < pl._stun) return;
       if (pl._last && now - pl._last < 150) return;
       pl._last = now;
       const x = +m.x, y = +m.y; if (!isFinite(x) || !isFinite(y)) return;
       if (m.tgt === 'fly') {
         const f = S.flies.find(q => q.id === m.fid);
         if (f && !S.dead[f.id]) {
-          // was it sitting there just now (allowing for lag)?
-          const ok = f.legs.some(g => g.a === 'l' && t >= g.t0 - 150 && t <= g.t1 + GRACE && Math.hypot(g.x - x, g.y - y) < KIND[f.k].r * 2.2);
-          if (ok) {
+          // was it there (landed or flying past) a moment ago? look back over the lag window
+          let hitAt = null;
+          for (let tt = t + 100; tt >= t - GRACE - 250; tt -= 25) {
+            const q = flyPos(f, tt);
+            if (q && Math.hypot(q.x - x, q.y - y) < KIND[f.k].r * 2) { hitAt = q; break; }
+          }
+          if (hitAt) {
             const pts = KIND[f.k].pts;
             S.dead[f.id] = pid; pl.score += pts; pl.kills++; pl.roundKills++;
-            const g = f.legs.find(q => q.a === 'l' && t >= q.t0 - 150 && t <= q.t1 + GRACE);
-            this.fx({ type: 'kill', pid, fid: f.id, k: f.k, pts, x: g.x, y: g.y });
+            this.fx({ type: 'kill', pid, fid: f.id, k: f.k, pts, x: Math.round(hitAt.x * 1000) / 1000, y: Math.round(hitAt.y * 1000) / 1000, air: !hitAt.landed });
             if (f.k === 'gold') this.say(pid, 'gold', 'happy'); else if (this.rng() < 0.15) this.say(pid, 'kill', 'happy');
             this.changed();
             return;
@@ -273,11 +268,10 @@
         return;
       }
       const real = hitTest(S, x, y, t, 0.01);
-      const tgt = m.tgt === 'cat' || m.tgt === 'plate' || m.tgt === 'cup' ? m.tgt : real.tgt === 'fly' ? 'none' : real.tgt;
-      if (tgt === 'cat' || tgt === 'plate' || tgt === 'cup') {
+      const tgt = m.tgt === 'plate' || m.tgt === 'cup' ? m.tgt : real.tgt === 'fly' ? 'none' : real.tgt;
+      if (tgt === 'plate' || tgt === 'cup') {
         const pts = OOPS[tgt];
         pl.score += pts; pl.oops++;
-        if (tgt === 'cat') pl._stun = now + 1000;
         this.fx({ type: 'oops', pid, tgt, pts, x, y, id: m.id || real.id });
         this.say(pid, tgt, 'sad');
         this.changed();
