@@ -1,6 +1,6 @@
-# Kopitiam 21 · 9 kopitiam games
+# Kopitiam 21 · 10 kopitiam games
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with nine games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit**, **Lalat Hunt** and **Mamak Mahjong**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with ten games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit**, **Lalat Hunt**, **Mamak Mahjong** and **Roti Flip**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -97,6 +97,17 @@ Pick **MAMAK MAHJONG** on the first screen before tapping BUKA MEJA. You need at
 - Points: win +10, winning on your own draw +5, winning with no CHOP sets +5. Whoever threw your winning tile loses 5.
 - TUNGGU under your tiles shows the tile you are waiting for. If the wall runs out, the hand is a draw. 4 hands per game.
 
+## Roti Flip (1–6 players)
+
+Pick **ROTI FLIP** on the first screen before tapping BUKA MEJA. You can also play alone.
+
+- Everyone flips their own roti canai dough at the same time, 30 seconds per round.
+- Tap the dough to fling it. A ring closes in as it comes down; tap again when the ring turns green.
+- PERFECT stretches it a lot. OK stretches it a little and tears it slightly. Early, late or missed puts a hole in it. Each flip is faster than the last.
+- Fill the KOYAK bar and the roti tears: 0 points this round. Press LETAK any time to put it on the tawa and keep the points. When time runs out, whole dough is put on the tawa for you.
+- 10 or more flips is a Roti Tisu, worth 20 extra. Round 3 is Roti Telur and every score counts double. Most points after 3 rounds wins.
+- On a computer, Space flips and Enter is LETAK.
+
 ## Uncle Jack 21 (secret game)
 
 Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it.
@@ -132,6 +143,8 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/orderview.js` | Ingat Order customers, speech bubbles, tablet and food/drink icons. |
 | `js/egg.js` | Cari Telur levels, shuffle scripts and scoring. Runs on the host. |
 | `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
+| `js/roti.js` | Roti Flip timing rules, rounds, flip checks, scoring and bots. Runs on the host. |
+| `js/rotiview.js` | Roti Flip counter, dough, timing ring, tawa and your own flips. |
 | `js/mamak.js` | Mamak Mahjong tiles, turns, CHOP/MAKAN claims, scoring and bots. Runs on the host; each hand is sent only to its owner. |
 | `js/mamakview.js` | Mamak Mahjong table, discard pool, open sets and your tile rack. |
 | `js/lalat.js` | Lalat Hunt fly paths, table layout, swat checking and scoring. Runs on the host. |

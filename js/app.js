@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v27';
+  const VERSION = 'v28';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -197,7 +197,7 @@
 
   function startHost() {
     newSession('host');
-    const Engine = { pong: PONG.Table, kopi: KOPI.Table, order: ORDER.Table, egg: EGG.Table, tarik: TARIK.Table, duit: DUIT.Table, lalat: LALAT.Table, mamak: MAMAK.Table }[me.mode] || BJ.Table;
+    const Engine = { pong: PONG.Table, kopi: KOPI.Table, order: ORDER.Table, egg: EGG.Table, tarik: TARIK.Table, duit: DUIT.Table, lalat: LALAT.Table, mamak: MAMAK.Table, roti: ROTI.Table }[me.mode] || BJ.Table;
     const table = new Engine({
       hostId: me.id,
       onChange: flush,
@@ -377,6 +377,19 @@
       $('#game').classList.toggle('myturn', s.phase === 'answer' && s.cur === me.id);
       $('#game').classList.toggle('hide-emote', s.phase === 'answer' && s.cur === me.id);
       if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showOrderResult, 1600);
+      firstRender = false;
+      return;
+    }
+    if (s.game === 'roti') {
+      $('#btnHost').classList.add('hidden');
+      setView('roti');
+      RV.render(s, me.id);
+      renderTarikHud(s, '#rotiView .kq');
+      renderTimer(s, meP);
+      renderRotiControls(s, meP);
+      renderTicker(s);
+      $('#game').classList.toggle('myturn', s.phase === 'play' && !!meP && meP.inGame);
+      if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showRotiResult, 1600);
       firstRender = false;
       return;
     }
@@ -714,6 +727,12 @@
       bar.classList.add('on');
       return;
     }
+    if (s.game === 'roti') {
+      setText($('#timerLbl'), t.kind === 'play' ? (s.telur ? 'ROTI TELUR!' : 'TEBAR ROTI!') : t.kind === 'ready' ? 'SIAP...' : 'REHAT');
+      G.timer.mine = t.kind === 'play';
+      bar.classList.add('on');
+      return;
+    }
     if (s.game === 'mamak') {
       const mine = (t.kind === 'turn' && s.cur === me.id) || (t.kind === 'claim' && G.priv && G.priv.claim);
       setText($('#timerLbl'), t.kind === 'turn' ? (s.cur === me.id ? 'GILIRAN KAU!' : nameOf(s.cur).toUpperCase() + '...') : t.kind === 'claim' ? 'CHOP? MAKAN?' : 'NEXT HAND');
@@ -921,13 +940,14 @@
       case 'addBot': AU.play('pop'); send({ t: 'addBot' }); return;
       case 'hostMenu': showHostMenu(); return;
       case 'newGame': send({ t: 'newGame' }); closeOverlay(); return;
+      case 'rtLetak': RV.letak(); return;
       case 'mjDiscard': MV.discardSel(); return;
       case 'mjWin': send({ t: 'selfwin' }); return;
       case 'mjChop': send({ t: 'claim', what: 'chop' }); return;
       case 'mjMakan': send({ t: 'claim', what: 'makan' }); return;
       case 'mjPass': send({ t: 'claim', what: 'pass' }); return;
       case 'mjNext': send({ t: 'next' }); return;
-      case 'results': if (G.state && G.state.game === 'mamak') showMamakResult(); else if (G.state && G.state.game === 'lalat') showLalatResult(); else if (G.state && G.state.game === 'duit') showDuitResult(); else if (G.state && G.state.game === 'tarik') showTarikResult(); else if (G.state && G.state.game === 'order') showOrderResult(); else if (G.state && G.state.game === 'egg') showEggResult(); else showPodium(); return;
+      case 'results': if (G.state && G.state.game === 'roti') showRotiResult(); else if (G.state && G.state.game === 'mamak') showMamakResult(); else if (G.state && G.state.game === 'lalat') showLalatResult(); else if (G.state && G.state.game === 'duit') showDuitResult(); else if (G.state && G.state.game === 'tarik') showTarikResult(); else if (G.state && G.state.game === 'order') showOrderResult(); else if (G.state && G.state.game === 'egg') showEggResult(); else showPodium(); return;
       case 'submitOrder': AU.play('chip'); send({ t: 'chit', items: OV.chitNow() }); send({ t: 'submit' }); return;
       case 'menu': confirmLeave(); return;
     }
@@ -937,6 +957,7 @@
   function targetFor(pid) {
     if (!G || !G.state) return null;
     if (G.state.game === 'pong') return $$('#pongView .ph-card').find(c => c.dataset.pid === pid) || null;
+    if (G.state.game === 'roti') return $$('#rotiView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'mamak') return $$('#mamakView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'lalat') return $$('#lalatView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'duit') return $$('#duitView .kp-card').find(c => c.dataset.pid === pid) || null;
@@ -957,6 +978,7 @@
     if (G.state && G.state.game === 'duit') { duitFx(f); return; }
     if (G.state && G.state.game === 'lalat') { lalatFx(f); return; }
     if (G.state && G.state.game === 'mamak') { mamakFx(f); return; }
+    if (G.state && G.state.game === 'roti') { rotiFx(f); return; }
     if (G.state && G.state.game === 'order') { orderFx(f); return; }
     if (G.state && G.state.game === 'egg') { eggFx(f); return; }
     switch (f.type) {
@@ -1160,6 +1182,8 @@
     $('#duitView').classList.toggle('hidden', v !== 'duit');
     $('#lalatView').classList.toggle('hidden', v !== 'lalat');
     $('#mamakView').classList.toggle('hidden', v !== 'mamak');
+    $('#rotiView').classList.toggle('hidden', v !== 'roti');
+    if (RV.visible !== (v === 'roti')) { RV.visible = v === 'roti'; RV.show(RV.visible); }
     if (v !== 'mamak' && MV.active) { MV.active = false; MV.reset(); }
     if (v === 'mamak') MV.active = true;
     if (LV.visible !== (v === 'lalat')) { LV.visible = v === 'lalat'; LV.show(LV.visible); }
@@ -1402,6 +1426,63 @@
     confetti();
   }
 
+  // =============== ROTI FLIP ===============
+  function renderRotiControls(s, meP) {
+    const box = $('#controls');
+    const host = s.hostId === me.id, n = s.players.length, ph = s.phase;
+    const d = RV.state();
+    const dst = d ? d.st : '';
+    const key = ['roti', ph, s.rnd, n, host, s.winner, dst, (G.relays || []).join()].join('|');
+    let html = '';
+    const rnd = `Round <b>${Math.max(1, Math.min(s.rnd, s.rounds))}/${s.rounds}</b>${s.telur ? ' · <b>ROTI TELUR x2</b>' : ''}`;
+    if (ph === 'lobby') {
+      html = host
+        ? `<div class="ctl-info">Roti Flip · Players <b>${n}/${ROTI.MAX}</b></div>
+           <div class="ctl-row">${n < ROTI.MAX ? '<button class="btn fixed" data-act="addBot">+ BOT</button>' : ''}
+           <button class="btn red big" data-act="start">START!<small>${n < 2 ? 'Main sorang pun boleh' : 'Tebar roti!'}</small></button></div>
+           <div class="ctl-hint">${n < ROTI.MAX ? 'Share code ' + esc(s.code || '') + ' · ' : ''}${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
+        : `<div class="ctl-info">Roti Flip · waiting for host to <b>START</b></div><div class="ctl-hint">Tap to flip, tap as it lands. LETAK before it koyak!</div>`;
+    } else if (ph === 'over') {
+      const w = s.players.find(p => p.id === s.winner);
+      html = `<div class="ctl-info"><b>${esc(w ? w.name : '?')}</b> Raja Roti!</div>
+        <div class="ctl-row"><button class="btn big" data-act="results">RESULTS</button>${host ? '<button class="btn red big" data-act="newGame">MAIN LAGI<small>Restart</small></button>' : ''}<button class="btn big" data-act="menu">MAIN MENU<small>${host ? 'Close table' : 'Leave table'}</small></button></div>`;
+    } else if (ph === 'play' && meP && meP.inGame && (dst === 'ball' || dst === 'air')) {
+      html = `<div class="ctl-info">${rnd}</div>
+        <div class="ctl-row"><button class="btn green big" data-act="rtLetak"${dst === 'air' ? ' disabled' : ''}>LETAK!<small>Masuk tawa, simpan point</small></button></div>
+        <div class="ctl-hint">Tap the dough to flip · tap again when the ring turns green${matchMedia('(pointer:fine)').matches ? ' · Space = flip · Enter = letak' : ''}</div>`;
+    } else if (ph === 'play') {
+      html = `<div class="ctl-info">${rnd} · ${dst === 'koyak' ? '<b>KOYAK!</b> Tengok orang lain...' : dst === 'banked' ? '<b>Dah letak!</b> Tunggu yang lain...' : 'Tengok je'}</div>`;
+    } else if (ph === 'break') {
+      const best = s.players.filter(p => p.inGame && s.dough && s.dough[p.id]).sort((a, b) => s.dough[b.id].pts - s.dough[a.id].pts)[0];
+      html = `<div class="ctl-info">${rnd} habis! ${best && s.dough[best.id].pts ? '<b>' + esc(best.name) + '</b> roti paling besar · ' + s.dough[best.id].pts : 'Semua koyak!'}</div>`;
+    } else html = `<div class="ctl-info">${rnd} · <b>Siap sedia...</b></div><div class="ctl-hint">${s.telur ? 'Telur round: double points, but a koyak is messy!' : 'Bigger roti = more points'}</div>`;
+    setCtl(box, key, html);
+  }
+
+  function rotiFx(f) {
+    RV.fx(f);
+    switch (f.type) {
+      case 'say': bubble(f.pid, f.text, f.mood); break;
+      case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
+      case 'banner': showBanner(f.text, f.style); break;
+      case 'koyak': if (f.pid === me.id) shakeScreen(); mood(avatarOf(f.pid), 'sad'); break;
+      case 'letak': if (f.tisu) mood(avatarOf(f.pid), 'happy'); break;
+      case 'roundEnd': AU.play('win'); if (f.best) mood(avatarOf(f.best), 'happy'); break;
+      case 'gameover': confetti(); AU.play(f.winner === me.id ? 'tada' : 'win'); break;
+    }
+  }
+
+  function showRotiResult() {
+    const s = G && G.state; if (!s || s.phase !== 'over' || !s.ranking) return;
+    const r = s.ranking;
+    const pd = (p, i) => p ? `<div class="pd p${i + 1}"><div class="av" style="background-image:url(${SPR.avatarSheet(p.avatar)})"></div><div class="nm">${esc(p.name)}</div><div class="ch">${p.score} pts</div><div class="blk">${i + 1}</div></div>` : '';
+    showOverlay(`<div class="modal"><h2>RAJA ROTI · ${esc(r[0] ? r[0].name : '')}!</h2>
+      <div class="podium">${pd(r[1], 1)}${pd(r[0], 0)}${pd(r[2], 2)}</div>
+      ${r.map((p, i) => `<p>${i + 1}. ${esc(p.name)} — <b>${p.score}</b> pts · ${p.rounds.map(x => x || '<s>koyak</s>').join(' / ')}${p.tisu ? ' · tisu ' + p.tisu + '×' : ''}</p>`).join('')}
+      <div class="row">${G.isHost ? '<button class="btn red" data-h="newGame">MAIN LAGI</button>' : ''}<button class="btn" data-h="menu">MAIN MENU</button><button class="btn" data-h="close">CLOSE</button></div></div>`, 'podium');
+    confetti();
+  }
+
   // =============== MAMAK MAHJONG ===============
   function renderMamakControls(s, meP, pv) {
     const box = $('#controls');
@@ -1579,6 +1660,14 @@
       setText($('.nm', c), p.name);
       const turn = s.game === 'duit' ? !!(s.phase === 'count' && s.gave && s.gave[id]) : (s.phase === 'tarik' || s.phase === 'result') && s.turn && s.turn.pid === id;
       if (s.game === 'lalat') $('small', c).style.color = p.col;
+      if (s.game === 'roti') {
+        const dd = s.dough && s.dough[id];
+        setText($('small', c), s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : !p.inGame ? 'NEXT' : s.phase === 'play' && dd ? (dd.st === 'banked' ? 'LETAK ' + dd.pts : dd.st === 'koyak' ? 'KOYAK!' : dd.n + ' FLIP') : p.score + ' PTS');
+        c.classList.toggle('turn', !!(s.phase === 'play' && dd && dd.st === 'banked'));
+        c.classList.toggle('out', !!(s.phase === 'play' && dd && dd.st === 'koyak'));
+        c.classList.toggle('me', id === me.id);
+        return;
+      }
       if (s.game === 'mamak') {
         const sub = s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : !s.seats.includes(id) ? 'NEXT' : !p.connected ? 'AUTO' : s.phase === 'turn' && s.cur === id ? 'MAIN!' : p.score + ' PTS';
         setText($('small', c), sub);
@@ -1767,6 +1856,9 @@
       <h3>CARI TELUR · 1–6 players</h3>
       <ul><li>Follow the egg under the shuffling bowls, then everyone taps a bowl at the same time.</li>
       <li>10 levels, 3 up to 6 bowls. 100 points per egg found, plus a bonus for picking fast.</li></ul>
+      <h3>ROTI FLIP · 1–6 players</h3>
+      <ul><li>Everyone flips at once. <b>Tap</b> the dough to fling it, <b>tap again</b> when the ring turns green as it lands. Good catches make it bigger and thinner.</li>
+      <li>Bad timing tears it. <b>LETAK</b> any time to keep your points — koyak first and you get 0. 10+ flips = Roti Tisu +20. Round 3 is Roti Telur x2.</li></ul>
       <h3>MAMAK MAHJONG · 2–4 players</h3>
       <ul><li>Hold 7 kopitiam tiles. Each turn you draw one, then <b>buang</b> one. Win with <b>2 sets of three-of-a-kind + 1 pair</b> — MAKAN!</li>
       <li>When someone buang a tile you have a pair of, <b>CHOP</b> it for an open set. If it finishes your hand, <b>MAKAN</b> it. 4 hands, most points wins.</li></ul>
@@ -1807,6 +1899,19 @@
           <li>30 seconds, then tap <b>HANTAR ORDER</b>.</li>
           <li>+10 for each right item, −5 for each wrong one, +20 for a perfect table.</li>
           <li>5 tables each, from 1 customer up to 4. From table 3, someone may shout <b>"tambah satu..."</b>. At table 5 someone also <b>tukar</b> (changes) their order!</li>
+        </ul>
+        <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
+      return;
+    }
+    if (G && G.state && G.state.game === 'roti') {
+      showOverlay(`<div class="modal"><h2>ROTI FLIP · CARA MAIN</h2>
+        <ul>
+          <li>Everyone flips their own roti canai at the same time. <b>30 seconds</b> per round.</li>
+          <li><b>Tap</b> the dough to fling it up. A ring closes in as it comes down — <b>tap again</b> when the ring turns <b>green</b>.</li>
+          <li><b>PERFECT</b> = big stretch. <b>OK</b> = small stretch and a little tear. <b>Early, late or missed</b> = a hole! Each flip is faster than the last.</li>
+          <li>Fill the <b>KOYAK</b> bar and your roti tears — <b>0 points</b> this round.</li>
+          <li>Press <b>LETAK!</b> any time to slap it on the tawa and keep the points. When time runs out, whole dough goes on the tawa by itself.</li>
+          <li>10+ flips = <b>Roti Tisu +20</b>. Round 3 is <b>Roti Telur</b>: everything x2. Most points after 3 rounds is Raja Roti.</li>
         </ul>
         <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
       return;
@@ -1970,7 +2075,7 @@
     if (!G || !G.code) return;
     AU.play('click');
     const url = location.origin + location.pathname + '?room=' + G.code;
-    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order', egg: 'Cari Telur', tarik: 'Tarik Teh', duit: 'Kira Duit', lalat: 'Lalat Hunt', mamak: 'Mamak Mahjong' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
+    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order', egg: 'Cari Telur', tarik: 'Tarik Teh', duit: 'Kira Duit', lalat: 'Lalat Hunt', mamak: 'Mamak Mahjong', roti: 'Roti Flip' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
     if (navigator.share) { navigator.share({ title: 'Kopitiam 21', text, url }).catch(() => {}); return; }
     const done = () => toast('Link copied! Paste to your friends');
     if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(done, () => toast('Code: ' + G.code));
@@ -1996,6 +2101,13 @@
   DV.mount($('#duitView'), { onGive: m => send(m) });
   LV.mount($('#lalatCanvas'), { onSwat: m => send(m) });
   MV.mount($('#mamakView'), { onAct: m => send(m) });
+  RV.mount($('#rotiCanvas'), { onReport: m => send(m) });
+  RV.onLocal = () => { if (G && G.state) renderRotiControls(G.state, G.state.players.find(p => p.id === me.id)); };
+  window.addEventListener('keydown', e => {
+    if (!G || !G.state || G.state.game !== 'roti' || e.repeat || document.activeElement.tagName === 'INPUT') return;
+    if (e.code === 'Space') { e.preventDefault(); RV.tap(); }
+    if (e.code === 'Enter') { e.preventDefault(); RV.letak(); }
+  });
   TV.onLocal = L => {
     const m = $('#tarikMsg'); if (!m) return;
     const html = L.done ? (L.sp >= TARIK.P.TUMPAH ? '<b>TUMPAH!</b> Aiyo...' : '<b>' + Math.round(L.fr) + ' buih!</b>') : L.miss ? '<b>Kejar!</b> Catch the teh!' : L.h > 0.75 ? '<b>GILA tinggi!</b> Lepas bila-bila...' : '<b>Tarik!</b> Hold &amp; slide...';
