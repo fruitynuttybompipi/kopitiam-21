@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v23';
+  const VERSION = 'v24';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -197,7 +197,7 @@
 
   function startHost() {
     newSession('host');
-    const Engine = { pong: PONG.Table, kopi: KOPI.Table, order: ORDER.Table, egg: EGG.Table, tarik: TARIK.Table, duit: DUIT.Table }[me.mode] || BJ.Table;
+    const Engine = { pong: PONG.Table, kopi: KOPI.Table, order: ORDER.Table, egg: EGG.Table, tarik: TARIK.Table, duit: DUIT.Table, lalat: LALAT.Table }[me.mode] || BJ.Table;
     const table = new Engine({
       hostId: me.id,
       onChange: flush,
@@ -363,6 +363,19 @@
       $('#game').classList.toggle('myturn', s.phase === 'answer' && s.cur === me.id);
       $('#game').classList.toggle('hide-emote', s.phase === 'answer' && s.cur === me.id);
       if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showOrderResult, 1600);
+      firstRender = false;
+      return;
+    }
+    if (s.game === 'lalat') {
+      $('#btnHost').classList.add('hidden');
+      setView('lalat');
+      LV.render(s, me.id);
+      renderTarikHud(s, '#lalatView .kq');
+      renderTimer(s, meP);
+      renderLalatControls(s, meP);
+      renderTicker(s);
+      $('#game').classList.toggle('myturn', s.phase === 'play' && !!meP && meP.inGame);
+      if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showLalatResult, 1600);
       firstRender = false;
       return;
     }
@@ -673,6 +686,12 @@
       bar.classList.add('on');
       return;
     }
+    if (s.game === 'lalat') {
+      setText($('#timerLbl'), t.kind === 'play' ? 'PAP LALAT!' : t.kind === 'ready' ? 'SIAP...' : 'REHAT');
+      G.timer.mine = t.kind === 'play';
+      bar.classList.add('on');
+      return;
+    }
     if (s.game === 'duit') {
       const done = !!(s.gave && s.gave[me.id]);
       setText($('#timerLbl'), done ? 'TUNGGU...' : 'KIRA BAKI!');
@@ -867,7 +886,7 @@
       case 'addBot': AU.play('pop'); send({ t: 'addBot' }); return;
       case 'hostMenu': showHostMenu(); return;
       case 'newGame': send({ t: 'newGame' }); closeOverlay(); return;
-      case 'results': if (G.state && G.state.game === 'duit') showDuitResult(); else if (G.state && G.state.game === 'tarik') showTarikResult(); else if (G.state && G.state.game === 'order') showOrderResult(); else if (G.state && G.state.game === 'egg') showEggResult(); else showPodium(); return;
+      case 'results': if (G.state && G.state.game === 'lalat') showLalatResult(); else if (G.state && G.state.game === 'duit') showDuitResult(); else if (G.state && G.state.game === 'tarik') showTarikResult(); else if (G.state && G.state.game === 'order') showOrderResult(); else if (G.state && G.state.game === 'egg') showEggResult(); else showPodium(); return;
       case 'submitOrder': AU.play('chip'); send({ t: 'chit', items: OV.chitNow() }); send({ t: 'submit' }); return;
       case 'menu': confirmLeave(); return;
     }
@@ -877,6 +896,7 @@
   function targetFor(pid) {
     if (!G || !G.state) return null;
     if (G.state.game === 'pong') return $$('#pongView .ph-card').find(c => c.dataset.pid === pid) || null;
+    if (G.state.game === 'lalat') return $$('#lalatView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'duit') return $$('#duitView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'tarik') return $$('#tarikView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'kopi') return $$('#kopiView .kp-card').find(c => c.dataset.pid === pid) || null;
@@ -893,6 +913,7 @@
     if (G.state && G.state.game === 'kopi') { kopiFx(f); return; }
     if (G.state && G.state.game === 'tarik') { tarikFx(f); return; }
     if (G.state && G.state.game === 'duit') { duitFx(f); return; }
+    if (G.state && G.state.game === 'lalat') { lalatFx(f); return; }
     if (G.state && G.state.game === 'order') { orderFx(f); return; }
     if (G.state && G.state.game === 'egg') { eggFx(f); return; }
     switch (f.type) {
@@ -1094,6 +1115,8 @@
     $('#kopiView').classList.toggle('hidden', v !== 'kopi');
     $('#tarikView').classList.toggle('hidden', v !== 'tarik');
     $('#duitView').classList.toggle('hidden', v !== 'duit');
+    $('#lalatView').classList.toggle('hidden', v !== 'lalat');
+    if (LV.visible !== (v === 'lalat')) { LV.visible = v === 'lalat'; LV.show(LV.visible); }
     if (v !== 'duit' && DV.active) { DV.active = false; DV.reset(); }
     if (v === 'duit') DV.active = true;
     if (TV.visible !== (v === 'tarik')) { TV.visible = v === 'tarik'; TV.show(TV.visible); }
@@ -1333,6 +1356,59 @@
     confetti();
   }
 
+  // =============== LALAT HUNT ===============
+  function renderLalatControls(s, meP) {
+    const box = $('#controls');
+    const host = s.hostId === me.id, n = s.players.length, ph = s.phase;
+    const key = ['lalat', ph, s.rnd, n, host, s.winner, (G.relays || []).join()].join('|');
+    let html = '';
+    const rnd = `Round <b>${Math.max(1, Math.min(s.rnd, s.rounds))}/${s.rounds}</b>`;
+    if (ph === 'lobby') {
+      html = host
+        ? `<div class="ctl-info">Lalat Hunt · Players <b>${n}/${LALAT.MAX}</b></div>
+           <div class="ctl-row">${n < LALAT.MAX ? '<button class="btn fixed" data-act="addBot">+ BOT</button>' : ''}
+           <button class="btn red big" data-act="start">START!<small>${n < 2 ? 'Main sorang pun boleh' : 'Pap pap pap'}</small></button></div>
+           <div class="ctl-hint">${n < LALAT.MAX ? 'Share code ' + esc(s.code || '') + ' · ' : ''}${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
+        : `<div class="ctl-info">Lalat Hunt · waiting for host to <b>START</b></div><div class="ctl-hint">Swat landed flies. Jangan kena pinggan or kucing!</div>`;
+    } else if (ph === 'over') {
+      const w = s.players.find(p => p.id === s.winner);
+      html = `<div class="ctl-info"><b>${esc(w ? w.name : '?')}</b> Raja Lalat!</div>
+        <div class="ctl-row"><button class="btn big" data-act="results">RESULTS</button>${host ? '<button class="btn red big" data-act="newGame">MAIN LAGI<small>Restart</small></button>' : ''}<button class="btn big" data-act="menu">MAIN MENU<small>${host ? 'Close table' : 'Leave table'}</small></button></div>`;
+    } else if (ph === 'break') {
+      const best = s.players.filter(p => p.inGame).sort((a, b) => (b.roundKills || 0) - (a.roundKills || 0))[0];
+      html = `<div class="ctl-info">${rnd} habis! ${best && best.roundKills ? '<b>' + esc(best.name) + '</b> pap ' + best.roundKills + ' lalat' : 'Lalat menang round ni...'}</div>`;
+    } else if (ph === 'ready') {
+      html = `<div class="ctl-info">${rnd} · <b>Siap sedia...</b></div><div class="ctl-hint">${s.rnd === 3 ? 'SWARM! And the cat is walking around...' : s.rnd === 2 ? 'More lalat, plates moved' : 'Tap a fly when it lands'}</div>`;
+    } else {
+      html = `<div class="ctl-info">${rnd} · <b>Pap!</b> Tap landed lalat</div><div class="ctl-hint">${meP && !meP.inGame ? 'You join next game — tengok je' : 'Lalat +10 · langau hijau +25 · emas +50 · pinggan −15 · kucing −30'}</div>`;
+    }
+    setCtl(box, key, html);
+  }
+
+  function lalatFx(f) {
+    LV.fx(f);
+    switch (f.type) {
+      case 'say': bubble(f.pid, f.text, f.mood); break;
+      case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
+      case 'banner': showBanner(f.text, f.style); break;
+      case 'oops': if (f.pid === me.id) { shakeScreen(); vibrate(f.tgt === 'cat' ? [60, 40, 60] : 60); } mood(avatarOf(f.pid), 'sad'); break;
+      case 'kill': if (f.pid === me.id) vibrate(25); break;
+      case 'roundEnd': AU.play('win'); if (f.best) mood(avatarOf(f.best), 'happy'); break;
+      case 'gameover': confetti(); AU.play(f.winner === me.id ? 'tada' : 'win'); break;
+    }
+  }
+
+  function showLalatResult() {
+    const s = G && G.state; if (!s || s.phase !== 'over' || !s.ranking) return;
+    const r = s.ranking;
+    const pd = (p, i) => p ? `<div class="pd p${i + 1}"><div class="av" style="background-image:url(${SPR.avatarSheet(p.avatar)})"></div><div class="nm">${esc(p.name)}</div><div class="ch">${p.score} pts</div><div class="blk">${i + 1}</div></div>` : '';
+    showOverlay(`<div class="modal"><h2>RAJA LALAT · ${esc(r[0] ? r[0].name : '')}!</h2>
+      <div class="podium">${pd(r[1], 1)}${pd(r[0], 0)}${pd(r[2], 2)}</div>
+      ${r.map((p, i) => `<p>${i + 1}. ${esc(p.name)} — <b>${p.score}</b> pts · ${p.kills} lalat${p.oops ? ' · oops ' + p.oops + '×' : ''}</p>`).join('')}
+      <div class="row">${G.isHost ? '<button class="btn red" data-h="newGame">MAIN LAGI</button>' : ''}<button class="btn" data-h="menu">MAIN MENU</button><button class="btn" data-h="close">CLOSE</button></div></div>`, 'podium');
+    confetti();
+  }
+
   // =============== KIRA DUIT ===============
   function renderDuitControls(s, meP) {
     const box = $('#controls');
@@ -1396,7 +1472,9 @@
       setBg($('.av', c), SPR.avatarSheet(p.avatar));
       setText($('.nm', c), p.name);
       const turn = s.game === 'duit' ? !!(s.phase === 'count' && s.gave && s.gave[id]) : (s.phase === 'tarik' || s.phase === 'result') && s.turn && s.turn.pid === id;
-      const sub = s.game === 'duit'
+      if (s.game === 'lalat') $('small', c).style.color = p.col;
+      const sub = s.game === 'lalat' ? (s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : 'READY') : !p.inGame ? 'NEXT' : !p.connected ? 'OFF' : p.score + ' PTS')
+        : s.game === 'duit'
         ? (s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : !p.inGame ? 'NEXT' : !p.connected ? 'OFF' : s.phase === 'count' ? (s.gave && s.gave[id] ? 'DAH BAGI' : 'KIRA...') : p.score + ' PTS')
         : s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : !p.inGame ? 'NEXT' : s.phase === 'tarik' && turn ? 'TARIK!' : !p.connected ? 'OFF' : p.total + ' BUIH';
       setText($('small', c), sub);
@@ -1575,6 +1653,9 @@
       <h3>CARI TELUR · 1–6 players</h3>
       <ul><li>Follow the egg under the shuffling bowls, then everyone taps a bowl at the same time.</li>
       <li>10 levels, 3 up to 6 bowls. 100 points per egg found, plus a bonus for picking fast.</li></ul>
+      <h3>LALAT HUNT · 1–6 players</h3>
+      <ul><li>Flies land on the table. <b>Tap a landed fly</b> to swat it with your selipar — first hit wins it. Flies in the air dodge.</li>
+      <li>Lalat +10, green langau +25, gold +50. Hit a plate or cup −15, the cat −30 (and you're pening for 1 s). 3 rounds of 30 s.</li></ul>
       <h3>KIRA DUIT · 1–6 players</h3>
       <ul><li>A customer pays at the counter. Everyone works out the <b>baki</b> (change) at the same time and taps notes and coins, then <b>BAGI BAKI</b>.</li>
       <li>Right baki scores 100 for the fastest, then 75, 60... Fewest pieces gets +10. Wrong = 0. 10 customers, harder each time.</li></ul>
@@ -1609,6 +1690,19 @@
           <li>30 seconds, then tap <b>HANTAR ORDER</b>.</li>
           <li>+10 for each right item, −5 for each wrong one, +20 for a perfect table.</li>
           <li>5 tables each, from 1 customer up to 4. From table 3, someone may shout <b>"tambah satu..."</b>. At table 5 someone also <b>tukar</b> (changes) their order!</li>
+        </ul>
+        <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
+      return;
+    }
+    if (G && G.state && G.state.game === 'lalat') {
+      showOverlay(`<div class="modal"><h2>LALAT HUNT · CARA MAIN</h2>
+        <ul>
+          <li>Flies buzz around the kopitiam table and <b>land</b> for a moment. Everyone plays at the same time.</li>
+          <li><b>Tap a landed fly</b> to swat it with your selipar. The first player to hit it gets the points. Flies in the air dodge you!</li>
+          <li>Black lalat <b>+10</b> · fat green langau <b>+25</b> · golden lalat <b>+50</b> (rare and fast).</li>
+          <li>Miss and hit a <b>plate or cup −15</b> (pecah pinggan!). Hit the <b>cat −30</b>, and you're pening for 1 second.</li>
+          <li>Swatting empty table makes you wait a moment, so don't just spam.</li>
+          <li><b>3 rounds of 30 seconds.</b> Round 2 has more flies, round 3 is a swarm and the cat walks across the table. Most points wins Raja Lalat.</li>
         </ul>
         <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
       return;
@@ -1745,7 +1839,7 @@
     if (!G || !G.code) return;
     AU.play('click');
     const url = location.origin + location.pathname + '?room=' + G.code;
-    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order', egg: 'Cari Telur', tarik: 'Tarik Teh', duit: 'Kira Duit' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
+    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order', egg: 'Cari Telur', tarik: 'Tarik Teh', duit: 'Kira Duit', lalat: 'Lalat Hunt' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
     if (navigator.share) { navigator.share({ title: 'Kopitiam 21', text, url }).catch(() => {}); return; }
     const done = () => toast('Link copied! Paste to your friends');
     if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(done, () => toast('Code: ' + G.code));
@@ -1769,6 +1863,7 @@
   KV.mount($('#kopiCanvas'), { onLevel: m => send(m) });
   TV.mount($('#tarikCanvas'), { onFrame: m => send(m) });
   DV.mount($('#duitView'), { onGive: m => send(m) });
+  LV.mount($('#lalatCanvas'), { onSwat: m => send(m) });
   TV.onLocal = L => {
     const m = $('#tarikMsg'); if (!m) return;
     const html = L.done ? (L.sp >= TARIK.P.TUMPAH ? '<b>TUMPAH!</b> Aiyo...' : '<b>' + Math.round(L.fr) + ' buih!</b>') : L.miss ? '<b>Kejar!</b> Catch the teh!' : L.h > 0.75 ? '<b>GILA tinggi!</b> Lepas bila-bila...' : '<b>Tarik!</b> Hold &amp; slide...';

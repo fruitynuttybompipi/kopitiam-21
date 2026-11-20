@@ -1,6 +1,6 @@
-# Kopitiam 21 · 7 kopitiam games
+# Kopitiam 21 · 8 kopitiam games
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with seven games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh** and **Kira Duit**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with eight games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit** and **Lalat Hunt**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -76,6 +76,16 @@ Pick **KIRA DUIT** on the first screen before tapping BUKA MEJA. You can also pl
 - A right baki scores 100 for the fastest, then 75, 60, 50 and so on. Using the fewest pieces adds 10. A wrong baki or no answer scores 0.
 - 10 customers, with more items each time. Later customers sometimes pay with extra coins so the baki comes out neat.
 
+## Lalat Hunt (1–6 players)
+
+Pick **LALAT HUNT** on the first screen before tapping BUKA MEJA. You can also play alone.
+
+- Flies buzz around a kopitiam table seen from above and land for a moment. Everyone plays at the same time.
+- Tap a landed fly to swat it with your selipar. The first player to hit it gets the points. Flies in the air dodge.
+- Black lalat +10, fat green langau +25, rare golden lalat +50.
+- Missing and hitting a plate or cup is −15. Hitting the cat is −30 and you can't swat for 1 second. Swatting empty table makes you wait a moment.
+- 3 rounds of 30 seconds. Round 2 has more flies and new plates; round 3 is a swarm and the cat walks across the table.
+
 ## Uncle Jack 21 (secret game)
 
 Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it.
@@ -111,6 +121,8 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/orderview.js` | Ingat Order customers, speech bubbles, tablet and food/drink icons. |
 | `js/egg.js` | Cari Telur levels, shuffle scripts and scoring. Runs on the host. |
 | `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
+| `js/lalat.js` | Lalat Hunt fly paths, table layout, swat checking and scoring. Runs on the host. |
+| `js/lalatview.js` | Lalat Hunt table, flies, cat, selipar and splats. |
 | `js/duit.js` | Kira Duit customers, prices, change checking and scoring. Runs on the host. |
 | `js/duitview.js` | Kira Duit counter, receipt, pixel money and cash drawer. |
 | `js/tarik.js` | Tarik Teh turns, pour physics, bots and scoring. Runs on the host. |
