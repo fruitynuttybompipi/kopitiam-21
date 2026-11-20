@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#3b2416">
 <title>Kopitiam 21 · Multiplayer pixel kopitiam games with friends</title>
-<meta name="description" content="8 Malaysian kopitiam party games in your browser: Telur Pong, Kopi Tumpah, Ingat Order, Cari Telur, Tarik Teh, Kira Duit, Lalat Hunt and Roti Flip. Free, no sign-up — open a table, share the code, jom main!">
+<meta name="description" content="9 Malaysian kopitiam party games in your browser: Telur Pong, Kopi Tumpah, Ingat Order, Cari Telur, Tarik Teh, Kira Duit, Lalat Hunt, Roti Flip and Cari Beza. Free, no sign-up — open a table, share the code, jom main!">
 <link rel="canonical" href="https://fruitynuttybompipi.github.io/kopitiam-21/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Kopitiam 21">
 <meta property="og:url" content="https://fruitynuttybompipi.github.io/kopitiam-21/">
 <meta property="og:title" content="Kopitiam 21 · Multiplayer pixel kopitiam games with friends">
-<meta property="og:description" content="8 Malaysian kopitiam party games in your browser: Telur Pong, Kopi Tumpah, Ingat Order, Cari Telur, Tarik Teh, Kira Duit, Lalat Hunt and Roti Flip. Free, no sign-up — open a table, share the code, jom main!">
+<meta property="og:description" content="9 Malaysian kopitiam party games in your browser: Telur Pong, Kopi Tumpah, Ingat Order, Cari Telur, Tarik Teh, Kira Duit, Lalat Hunt, Roti Flip and Cari Beza. Free, no sign-up — open a table, share the code, jom main!">
 <meta property="og:image" content="https://fruitynuttybompipi.github.io/kopitiam-21/share.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -19,11 +19,11 @@
 <meta property="og:locale" content="en_MY">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Kopitiam 21 · Multiplayer pixel kopitiam games with friends">
-<meta name="twitter:description" content="8 Malaysian kopitiam party games in your browser: Telur Pong, Kopi Tumpah, Ingat Order, Cari Telur, Tarik Teh, Kira Duit, Lalat Hunt and Roti Flip. Free, no sign-up — open a table, share the code, jom main!">
+<meta name="twitter:description" content="9 Malaysian kopitiam party games in your browser: Telur Pong, Kopi Tumpah, Ingat Order, Cari Telur, Tarik Teh, Kira Duit, Lalat Hunt, Roti Flip and Cari Beza. Free, no sign-up — open a table, share the code, jom main!">
 <meta name="twitter:image" content="https://fruitynuttybompipi.github.io/kopitiam-21/share.png">
 <link rel="preload" href="fonts/PressStart2P.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/VT323.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="css/style.css?v=202611201308">
+<link rel="stylesheet" href="css/style.css?v=202611201315">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect x='3' y='5' width='8' height='8' fill='%23fbfbf4'/><rect x='3' y='5' width='8' height='2' fill='%233a2010'/><rect x='11' y='7' width='2' height='4' fill='%23fbfbf4'/><rect x='2' y='13' width='11' height='2' fill='%233fae6a'/></svg>">
 </head>
 <body>
@@ -35,7 +35,7 @@
     <div class="chain l"></div><div class="chain r"></div>
     <h1 class="sign"><span>KOPITIAM</span> <b>21</b></h1>
   </div>
-  <p class="tagline">8 games · Jom main!</p>
+  <p class="tagline">9 games · Jom main!</p>
 
   <div class="chit">
     <div class="chit-head"><span>ORDER CHIT</span><span>No. 21</span></div>
@@ -50,6 +50,7 @@
       <button class="pick mode" data-mode="duit" type="button"><b>KIRA DUIT</b><small>1–6 · bagi baki cepat</small></button>
       <button class="pick mode" data-mode="lalat" type="button"><b>LALAT HUNT</b><small>1–6 · pap pap pap!</small></button>
       <button class="pick mode" data-mode="roti" type="button"><b>ROTI FLIP</b><small>1–6 · jangan koyak!</small></button>
+      <button class="pick mode wide" data-mode="beza" type="button"><b>CARI BEZA</b><small>1–6 · spot the difference</small></button>
       <button class="pick mode secret hidden" data-mode="mamak" type="button"><b>MAMAK MAHJONG</b><small>Rahsia! 2–4 · tiles</small></button>
       <button class="pick mode secret hidden" data-mode="lami" type="button"><b>LAMI</b><small>Rahsia! 2–4 · Penang rummy</small></button>
       <button class="pick mode wide secret hidden" data-mode="bj" type="button"><b>UNCLE JACK 21</b><small>Rahsia! 2–6 players · Tauke deals</small></button>
@@ -127,6 +128,7 @@
     <div id="duitView" class="hidden"></div>
     <div id="mamakView" class="hidden"></div>
     <div id="lamiView" class="hidden"></div>
+    <div id="bezaView" class="hidden"></div>
     <div id="rotiView" class="hidden">
       <canvas id="rotiCanvas"></canvas>
       <div class="kq"></div>
@@ -158,33 +160,35 @@
 <div id="status" class="hidden"></div>
 <div id="toast"></div>
 
-<script src="js/vendor/mqtt.min.js?v=202611201308"></script>
-<script src="js/sprites.js?v=202611201308"></script>
-<script src="js/pong.js?v=202611201308"></script>
-<script src="js/kopi.js?v=202611201308"></script>
-<script src="js/order.js?v=202611201308"></script>
-<script src="js/egg.js?v=202611201308"></script>
-<script src="js/tarik.js?v=202611201308"></script>
-<script src="js/duit.js?v=202611201308"></script>
-<script src="js/lalat.js?v=202611201308"></script>
-<script src="js/mamak.js?v=202611201308"></script>
-<script src="js/lami.js?v=202611201308"></script>
-<script src="js/roti.js?v=202611201308"></script>
-<script src="js/engine.js?v=202611201308"></script>
-<script src="js/audio.js?v=202611201308"></script>
-<script src="js/scene.js?v=202611201308"></script>
-<script src="js/config.js?v=202611201308"></script>
-<script src="js/pongview.js?v=202611201308"></script>
-<script src="js/kopiview.js?v=202611201308"></script>
-<script src="js/orderview.js?v=202611201308"></script>
-<script src="js/eggview.js?v=202611201308"></script>
-<script src="js/tarikview.js?v=202611201308"></script>
-<script src="js/duitview.js?v=202611201308"></script>
-<script src="js/lalatview.js?v=202611201308"></script>
-<script src="js/mamakview.js?v=202611201308"></script>
-<script src="js/lamiview.js?v=202611201308"></script>
-<script src="js/rotiview.js?v=202611201308"></script>
-<script src="js/net.js?v=202611201308"></script>
-<script src="js/app.js?v=202611201308"></script>
+<script src="js/vendor/mqtt.min.js?v=202611201315"></script>
+<script src="js/sprites.js?v=202611201315"></script>
+<script src="js/pong.js?v=202611201315"></script>
+<script src="js/kopi.js?v=202611201315"></script>
+<script src="js/order.js?v=202611201315"></script>
+<script src="js/egg.js?v=202611201315"></script>
+<script src="js/tarik.js?v=202611201315"></script>
+<script src="js/duit.js?v=202611201315"></script>
+<script src="js/lalat.js?v=202611201315"></script>
+<script src="js/mamak.js?v=202611201315"></script>
+<script src="js/lami.js?v=202611201315"></script>
+<script src="js/beza.js?v=202611201315"></script>
+<script src="js/roti.js?v=202611201315"></script>
+<script src="js/engine.js?v=202611201315"></script>
+<script src="js/audio.js?v=202611201315"></script>
+<script src="js/scene.js?v=202611201315"></script>
+<script src="js/config.js?v=202611201315"></script>
+<script src="js/pongview.js?v=202611201315"></script>
+<script src="js/kopiview.js?v=202611201315"></script>
+<script src="js/orderview.js?v=202611201315"></script>
+<script src="js/eggview.js?v=202611201315"></script>
+<script src="js/tarikview.js?v=202611201315"></script>
+<script src="js/duitview.js?v=202611201315"></script>
+<script src="js/lalatview.js?v=202611201315"></script>
+<script src="js/mamakview.js?v=202611201315"></script>
+<script src="js/lamiview.js?v=202611201315"></script>
+<script src="js/bezaview.js?v=202611201315"></script>
+<script src="js/rotiview.js?v=202611201315"></script>
+<script src="js/net.js?v=202611201315"></script>
+<script src="js/app.js?v=202611201315"></script>
 </body>
 </html>

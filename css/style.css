@@ -661,3 +661,17 @@ input::placeholder { color: #7d6c50; }
 .lc.xs b { font-size: 7px; } .lc.xs img { width: 9px; height: 9px; margin-top: 2px; } .lc.xs small { display: none; }
 #lamiView.myturn .l-mine { box-shadow: inset 0 0 0 3px var(--ink), inset 0 4px 0 3px #8a5a34, 0 0 0 3px var(--gold), 0 5px 0 rgba(0,0,0,.3); }
 @media (max-width: 640px) { .lc { width: 30px; height: 42px; padding-left: 3px; } .lc b { font-size: 9px; } .lc img { width: 12px; height: 12px; } }
+
+/* ---------- Cari Beza ---------- */
+#bezaView { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 8px 8px; gap: 6px; overflow: hidden; }
+#bezaView .oq { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.bz-head { display: flex; gap: 12px; align-items: center; }
+.bz-head b { font-family: var(--px); font-size: 11px; background: var(--red); color: var(--gold); padding: 5px 8px 4px; box-shadow: 0 3px 0 rgba(0,0,0,.3); }
+.bz-head span { font-size: 18px; background: rgba(251,243,220,.92); padding: 2px 8px; box-shadow: inset 0 0 0 2px var(--ink); }
+.bz-head span b { background: none; box-shadow: none; padding: 0; color: var(--red); font-size: 10px; }
+.bz-pics { flex: 1; min-height: 0; width: 100%; display: flex; gap: 12px; align-items: center; justify-content: center; }
+.bz-pics.tall { flex-direction: column; }
+.bz-pic { position: relative; line-height: 0; }
+.bz-pic canvas { image-rendering: pixelated; box-shadow: 0 0 0 3px var(--ink), 0 6px 0 3px rgba(0,0,0,.3); cursor: crosshair; touch-action: none; }
+.bz-pic i { position: absolute; left: -6px; top: -8px; font-style: normal; font-family: var(--px); font-size: 9px; line-height: 1; background: var(--gold); color: var(--ink); padding: 3px 4px; box-shadow: inset 0 0 0 2px var(--ink); }
+#bezaView.noimg .bz-pics { visibility: hidden; }

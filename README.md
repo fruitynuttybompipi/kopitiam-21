@@ -1,6 +1,6 @@
-# Kopitiam 21 · 11 kopitiam games
+# Kopitiam 21 · 12 kopitiam games
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with eleven games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit**, **Lalat Hunt**, **Mamak Mahjong**, **Lami** and **Roti Flip**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with twelve games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit**, **Lalat Hunt**, **Mamak Mahjong**, **Lami**, **Roti Flip** and **Cari Beza**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -120,6 +120,15 @@ Penang rummy (Si Rummy), unlocked with the same 9 taps on the signboard.
 - If you can't meld or lay off on your turn, you are MATI and sit out with what's left.
 - Empty your hand to win the hand (GAME!). Everyone else counts what's left: A 15, 10/J/Q/K 10, 2–9 face value, Joker 20. 4 hands; lowest total wins.
 
+## Cari Beza (1–6 players)
+
+Pick **CARI BEZA** on the first screen before tapping BUKA MEJA. You can also play alone.
+
+- Two pictures of the same kopitiam corner, with 5 things changed: a colour, a missing cup, a moved cat, a different time on the clock, a new price on the menu and so on.
+- Everyone hunts at the same time. Tap the difference on either picture.
+- The first player to find it gets 10 points and a ring in their colour. A wrong tap costs 2 points and a short wait.
+- 5 pictures, 60 seconds each. Differences nobody found flash at the end of each picture. Most points wins.
+
 ## Uncle Jack 21 (secret game)
 
 Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it (this also unlocks Mamak Mahjong and Lami).
@@ -157,6 +166,8 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
 | `js/roti.js` | Roti Flip timing rules, rounds, flip checks, scoring and bots. Runs on the host. |
 | `js/rotiview.js` | Roti Flip counter, dough, timing ring, tawa and your own flips. |
+| `js/beza.js` | Cari Beza picture builder, the 5 changes, tap checking, scoring and bots. Runs on the host. |
+| `js/bezaview.js` | Cari Beza pixel pictures and found/miss marks. |
 | `js/lami.js` | Lami rules (runs, sets, jokers, passport, MATI), turns, scoring and bots. Runs on the host; hands are private. |
 | `js/lamiview.js` | Lami table melds, your card rack, picking and laying off. |
 | `js/mamak.js` | Mamak Mahjong tiles, turns, CHOP/MAKAN claims, scoring and bots. Runs on the host; each hand is sent only to its owner. |
