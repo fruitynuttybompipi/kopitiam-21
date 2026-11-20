@@ -518,3 +518,67 @@ input::placeholder { color: #7d6c50; }
 @media (prefers-reduced-motion: reduce) {
   .sign-wrap, .av, .crown { animation: none !important; }
 }
+
+/* ---------- Kira Duit ---------- */
+#duitView { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 8px 6px; overflow: hidden; gap: 6px; }
+#duitView .oq { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.d-head .d-level { font-family: var(--px); font-size: 11px; background: var(--red); color: var(--gold); padding: 5px 8px 4px; box-shadow: 0 3px 0 rgba(0,0,0,.3); }
+.d-counter { width: 100%; max-width: 560px; display: flex; gap: 10px; align-items: flex-end; justify-content: center; flex: 0 1 auto; min-height: 0; }
+.d-cust { position: relative; flex: none; padding-bottom: 6px; display: flex; flex-direction: column; align-items: center; }
+.d-cust .av { --av: 64px; }
+.d-cust.arrive .av { animation: hop .3s steps(2) 3; }
+.d-bub { position: absolute; bottom: calc(100% + 2px); left: 0; background: #fff; box-shadow: inset 0 0 0 3px var(--ink); padding: 5px 8px; font-size: 18px; line-height: 1; width: max-content; max-width: 150px; transform: scale(0); transform-origin: 20% 100%; z-index: 5; }
+.d-bub.show { transform: scale(1); }
+.d-receipt { flex: 1; min-width: 0; max-width: 300px; background: #fffaf0; box-shadow: inset 0 0 0 3px var(--ink), 0 5px 0 rgba(0,0,0,.25); padding: 8px 12px 12px; clip-path: polygon(0 0, 100% 0, 100% 100%, 92% 97%, 84% 100%, 76% 97%, 68% 100%, 60% 97%, 52% 100%, 44% 97%, 36% 100%, 28% 97%, 20% 100%, 12% 97%, 4% 100%, 0 97%); }
+.d-rh { font-family: var(--px); font-size: 8px; color: #8a7458; text-align: center; margin-bottom: 5px; }
+.d-row { display: flex; align-items: center; gap: 6px; font-size: 18px; line-height: 1; padding: 1px 0; }
+.d-row img { width: 22px; height: 22px; image-rendering: pixelated; flex: none; }
+.d-row span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d-row b, .d-sum b { font-family: var(--px); font-size: 10px; }
+.d-line { border-top: 3px dashed var(--ink); margin: 5px 0; }
+.d-sum { display: flex; justify-content: space-between; align-items: center; font-family: var(--px); font-size: 9px; padding: 2px 0; }
+.d-sum.paid { color: #2a6b2a; }
+.d-sum.baki { margin-top: 3px; background: var(--ink); color: var(--gold); padding: 5px 6px 4px; }
+.d-sum.baki.show b { animation: pulse .5s steps(2) 4; color: #7cff9a; }
+.d-paid { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; min-height: 0; padding: 2px 0; }
+.d-wait { font-family: var(--px); font-size: 10px; color: #6a5a48; text-align: center; padding: 18px 0; }
+#duitView img.note { width: 68px; height: 34px; image-rendering: pixelated; }
+#duitView img.coin { width: 30px; height: 30px; image-rendering: pixelated; }
+#duitView img.coin.big { width: 34px; height: 34px; }
+.d-paid img.note { width: 51px !important; height: 26px !important; }
+.d-paid img.coin { width: 22px !important; height: 22px !important; }
+.d-drawer { position: relative; width: 100%; max-width: 560px; background: #3b2416; box-shadow: inset 0 0 0 3px var(--ink), 0 5px 0 rgba(0,0,0,.3); padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.d-tray { display: flex; align-items: center; gap: 8px; background: #2a1a12; box-shadow: inset 0 0 0 2px #5a361f; padding: 6px; min-height: 52px; }
+.d-pieces { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
+.d-pc { position: relative; border: 0; background: none; padding: 0; line-height: 0; }
+.d-pc i { position: absolute; right: -4px; top: -6px; font-style: normal; font-family: var(--px); font-size: 8px; line-height: 1; background: var(--gold); color: var(--ink); padding: 2px 3px; box-shadow: inset 0 0 0 1px var(--ink); }
+.d-hint { font-size: 17px; color: #b8a080; }
+.d-total { font-family: var(--px); font-size: 14px; color: #7cff9a; background: #0f1f14; padding: 7px 8px 6px; box-shadow: inset 0 0 0 2px #000; flex: none; }
+.d-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.d-key { border: 0; background: #fbf3dc; box-shadow: inset 0 0 0 2px var(--ink), 0 3px 0 #1a0f0a; padding: 6px 2px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; line-height: 0; }
+.d-key small { font-family: var(--px); font-size: 7px; line-height: 1; color: var(--ink); }
+.d-key:active { transform: translateY(2px); box-shadow: inset 0 0 0 2px var(--ink), 0 1px 0 #1a0f0a; }
+.d-acts { display: flex; gap: 8px; }
+.d-acts .btn { flex: 1; }
+.d-acts .btn:first-child { flex: 0 0 auto; }
+.d-lock { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(42,26,18,.82); font-family: var(--px); font-size: 11px; color: var(--gold); text-align: center; padding: 10px; }
+#duitView.given .d-keys, #duitView.given .d-acts { opacity: .3; }
+.d-reveal { width: 100%; max-width: 560px; background: #fbf3dc; box-shadow: inset 0 0 0 3px var(--ink), 0 5px 0 rgba(0,0,0,.3); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; min-height: 0; }
+.d-ans { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: var(--px); font-size: 9px; border-bottom: 3px dashed var(--ink); padding-bottom: 6px; margin-bottom: 2px; }
+.d-ans b { font-size: 14px; color: var(--red); }
+.d-ans .d-paid { flex: 1; min-width: 0; padding: 0; }
+.d-res { display: flex; align-items: center; gap: 6px; font-size: 18px; line-height: 1; padding: 1px 0; }
+.d-res .av { --av: 24px; flex: none; }
+.d-res .nm { flex: 0 1 auto; min-width: 0; max-width: 34%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d-res .d-v { flex: 1; color: #5a4a38; font-size: 16px; }
+.d-res b { font-family: var(--px); font-size: 10px; }
+.d-res.ok .d-v { color: #2a6b2a; } .d-res.no .d-v { color: var(--red); }
+.d-res.me .nm { text-decoration: underline; }
+#duitView.reveal .d-cust .av { animation: none; }
+@media (max-width: 640px) {
+  .d-cust .av { --av: 48px; }
+  #duitView img.note { width: 56px; height: 28px; }
+  #duitView img.coin { width: 26px; height: 26px; }
+  #duitView img.coin.big { width: 30px; height: 30px; }
+  .d-row { font-size: 16px; }
+}

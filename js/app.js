@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v22';
+  const VERSION = 'v23';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -197,7 +197,7 @@
 
   function startHost() {
     newSession('host');
-    const Engine = { pong: PONG.Table, kopi: KOPI.Table, order: ORDER.Table, egg: EGG.Table, tarik: TARIK.Table }[me.mode] || BJ.Table;
+    const Engine = { pong: PONG.Table, kopi: KOPI.Table, order: ORDER.Table, egg: EGG.Table, tarik: TARIK.Table, duit: DUIT.Table }[me.mode] || BJ.Table;
     const table = new Engine({
       hostId: me.id,
       onChange: flush,
@@ -363,6 +363,19 @@
       $('#game').classList.toggle('myturn', s.phase === 'answer' && s.cur === me.id);
       $('#game').classList.toggle('hide-emote', s.phase === 'answer' && s.cur === me.id);
       if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showOrderResult, 1600);
+      firstRender = false;
+      return;
+    }
+    if (s.game === 'duit') {
+      $('#btnHost').classList.add('hidden');
+      setView('duit');
+      DV.render(s, me.id);
+      renderTarikHud(s, '#duitView .oq');
+      renderTimer(s, meP);
+      renderDuitControls(s, meP);
+      renderTicker(s);
+      $('#game').classList.toggle('myturn', s.phase === 'count' && !!meP && meP.inGame && !(s.gave && s.gave[me.id]));
+      if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showDuitResult, 1600);
       firstRender = false;
       return;
     }
@@ -660,6 +673,13 @@
       bar.classList.add('on');
       return;
     }
+    if (s.game === 'duit') {
+      const done = !!(s.gave && s.gave[me.id]);
+      setText($('#timerLbl'), done ? 'TUNGGU...' : 'KIRA BAKI!');
+      G.timer.mine = !done && !!meP && meP.inGame;
+      bar.classList.add('on');
+      return;
+    }
     if (s.game === 'tarik') {
       const mine = !!(s.turn && s.turn.pid === me.id);
       setText($('#timerLbl'), mine ? 'YOUR TARIK!' : (s.turn ? nameOf(s.turn.pid).toUpperCase() + ' TARIK...' : ''));
@@ -847,7 +867,7 @@
       case 'addBot': AU.play('pop'); send({ t: 'addBot' }); return;
       case 'hostMenu': showHostMenu(); return;
       case 'newGame': send({ t: 'newGame' }); closeOverlay(); return;
-      case 'results': if (G.state && G.state.game === 'tarik') showTarikResult(); else if (G.state && G.state.game === 'order') showOrderResult(); else if (G.state && G.state.game === 'egg') showEggResult(); else showPodium(); return;
+      case 'results': if (G.state && G.state.game === 'duit') showDuitResult(); else if (G.state && G.state.game === 'tarik') showTarikResult(); else if (G.state && G.state.game === 'order') showOrderResult(); else if (G.state && G.state.game === 'egg') showEggResult(); else showPodium(); return;
       case 'submitOrder': AU.play('chip'); send({ t: 'chit', items: OV.chitNow() }); send({ t: 'submit' }); return;
       case 'menu': confirmLeave(); return;
     }
@@ -857,6 +877,7 @@
   function targetFor(pid) {
     if (!G || !G.state) return null;
     if (G.state.game === 'pong') return $$('#pongView .ph-card').find(c => c.dataset.pid === pid) || null;
+    if (G.state.game === 'duit') return $$('#duitView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'tarik') return $$('#tarikView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'kopi') return $$('#kopiView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'order') return $$('#orderView .kp-card').find(c => c.dataset.pid === pid) || null;
@@ -871,6 +892,7 @@
     if (G.state && G.state.game === 'pong') { pongFx(f); return; }
     if (G.state && G.state.game === 'kopi') { kopiFx(f); return; }
     if (G.state && G.state.game === 'tarik') { tarikFx(f); return; }
+    if (G.state && G.state.game === 'duit') { duitFx(f); return; }
     if (G.state && G.state.game === 'order') { orderFx(f); return; }
     if (G.state && G.state.game === 'egg') { eggFx(f); return; }
     switch (f.type) {
@@ -1071,6 +1093,9 @@
     $('#pongView').classList.toggle('hidden', v !== 'pong');
     $('#kopiView').classList.toggle('hidden', v !== 'kopi');
     $('#tarikView').classList.toggle('hidden', v !== 'tarik');
+    $('#duitView').classList.toggle('hidden', v !== 'duit');
+    if (v !== 'duit' && DV.active) { DV.active = false; DV.reset(); }
+    if (v === 'duit') DV.active = true;
     if (TV.visible !== (v === 'tarik')) { TV.visible = v === 'tarik'; TV.show(TV.visible); }
     $('#orderView').classList.toggle('hidden', v !== 'order');
     $('#eggView').classList.toggle('hidden', v !== 'egg');
@@ -1308,9 +1333,58 @@
     confetti();
   }
 
+  // =============== KIRA DUIT ===============
+  function renderDuitControls(s, meP) {
+    const box = $('#controls');
+    const host = s.hostId === me.id, n = s.players.length, ph = s.phase;
+    const key = ['duit', ph, s.rnd, n, host, s.winner, (G.relays || []).join()].join('|');
+    let html = '';
+    const rnd = `Customer <b>${Math.max(1, Math.min(s.rnd, s.rounds))}/${s.rounds}</b>`;
+    if (ph === 'lobby') {
+      html = host
+        ? `<div class="ctl-info">Kira Duit · Cashiers <b>${n}/${DUIT.MAX}</b></div>
+           <div class="ctl-row">${n < DUIT.MAX ? '<button class="btn fixed" data-act="addBot">+ BOT</button>' : ''}
+           <button class="btn red big" data-act="start">START!<small>${n < 2 ? 'Main sorang pun boleh' : 'Buka kaunter'}</small></button></div>
+           <div class="ctl-hint">${n < DUIT.MAX ? 'Share code ' + esc(s.code || '') + ' · ' : ''}${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
+        : `<div class="ctl-info">Kira Duit · waiting for host to <b>START</b></div><div class="ctl-hint">Bagi baki betul, paling laju menang!</div>`;
+    } else if (ph === 'over') {
+      const w = s.players.find(p => p.id === s.winner);
+      html = `<div class="ctl-info"><b>${esc(w ? w.name : '?')}</b> juruwang terbaik!</div>
+        <div class="ctl-row"><button class="btn big" data-act="results">RESULTS</button>${host ? '<button class="btn red big" data-act="newGame">MAIN LAGI<small>Restart</small></button>' : ''}<button class="btn big" data-act="menu">MAIN MENU<small>${host ? 'Close table' : 'Leave table'}</small></button></div>`;
+    } else if (ph === 'reveal') {
+      html = `<div class="ctl-info">${rnd} · next customer coming...</div>`;
+    } else if (ph === 'count') {
+      html = `<div class="ctl-info">${rnd} · <b>Kira baki!</b> Tap duit, then BAGI BAKI</div><div class="ctl-hint">${meP && !meP.inGame ? 'You join next game — tengok je' : 'Fastest right baki scores most · fewest pieces +10'}</div>`;
+    } else html = `<div class="ctl-info">${rnd} · next customer...</div>`;
+    setCtl(box, key, html);
+  }
+
+  function duitFx(f) {
+    DV.fx(f);
+    switch (f.type) {
+      case 'say': if (!f.cust) bubble(f.pid, f.text, f.mood); break;
+      case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
+      case 'banner': showBanner(f.text, f.style); break;
+      case 'gave': if (f.pid !== me.id) AU.play('tick'); break;
+      case 'reveal': if (f.first && f.first === me.id) { showBanner('PALING LAJU!', 'win'); vibrate(60); } else if (G.state && G.state.gave && G.state.gave[me.id] && !(G.state.results || []).some(r => r.id === me.id && r.ok)) shakeScreen(); break;
+      case 'gameover': confetti(); AU.play(f.winner === me.id ? 'tada' : 'win'); break;
+    }
+  }
+
+  function showDuitResult() {
+    const s = G && G.state; if (!s || s.phase !== 'over' || !s.ranking) return;
+    const r = s.ranking;
+    const pd = (p, i) => p ? `<div class="pd p${i + 1}"><div class="av" style="background-image:url(${SPR.avatarSheet(p.avatar)})"></div><div class="nm">${esc(p.name)}</div><div class="ch">${p.score} pts</div><div class="blk">${i + 1}</div></div>` : '';
+    showOverlay(`<div class="modal"><h2>JURUWANG TERBAIK · ${esc(r[0] ? r[0].name : '')}!</h2>
+      <div class="podium">${pd(r[1], 1)}${pd(r[0], 0)}${pd(r[2], 2)}</div>
+      ${r.map((p, i) => `<p>${i + 1}. ${esc(p.name)} — <b>${p.score}</b> pts · betul ${p.right}/${s.rounds}${p.fastest ? ' · paling laju ' + p.fastest + '×' : ''}</p>`).join('')}
+      <div class="row">${G.isHost ? '<button class="btn red" data-h="newGame">MAIN LAGI</button>' : ''}<button class="btn" data-h="menu">MAIN MENU</button><button class="btn" data-h="close">CLOSE</button></div></div>`, 'podium');
+    confetti();
+  }
+
   // =============== TARIK TEH ===============
-  function renderTarikHud(s) {
-    const box = $('#tarikView .kq');
+  function renderTarikHud(s, sel) {
+    const box = $(sel || '#tarikView .kq');
     const ids = s.order && s.order.length && s.phase !== 'lobby' ? s.order.concat(s.players.map(p => p.id).filter(id => !s.order.includes(id))) : s.players.map(p => p.id);
     const have = new Map($$('.kp-card', box).map(c => [c.dataset.pid, c]));
     ids.forEach((id, i) => {
@@ -1321,8 +1395,10 @@
       if (box.children[i] !== c) box.insertBefore(c, box.children[i] || null);
       setBg($('.av', c), SPR.avatarSheet(p.avatar));
       setText($('.nm', c), p.name);
-      const turn = (s.phase === 'tarik' || s.phase === 'result') && s.turn && s.turn.pid === id;
-      const sub = s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : !p.inGame ? 'NEXT' : s.phase === 'tarik' && turn ? 'TARIK!' : !p.connected ? 'OFF' : p.total + ' BUIH';
+      const turn = s.game === 'duit' ? !!(s.phase === 'count' && s.gave && s.gave[id]) : (s.phase === 'tarik' || s.phase === 'result') && s.turn && s.turn.pid === id;
+      const sub = s.game === 'duit'
+        ? (s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : !p.inGame ? 'NEXT' : !p.connected ? 'OFF' : s.phase === 'count' ? (s.gave && s.gave[id] ? 'DAH BAGI' : 'KIRA...') : p.score + ' PTS')
+        : s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : !p.inGame ? 'NEXT' : s.phase === 'tarik' && turn ? 'TARIK!' : !p.connected ? 'OFF' : p.total + ' BUIH';
       setText($('small', c), sub);
       c.classList.toggle('turn', !!turn);
       c.classList.toggle('out', s.phase !== 'lobby' && !p.inGame);
@@ -1499,6 +1575,9 @@
       <h3>CARI TELUR · 1–6 players</h3>
       <ul><li>Follow the egg under the shuffling bowls, then everyone taps a bowl at the same time.</li>
       <li>10 levels, 3 up to 6 bowls. 100 points per egg found, plus a bonus for picking fast.</li></ul>
+      <h3>KIRA DUIT · 1–6 players</h3>
+      <ul><li>A customer pays at the counter. Everyone works out the <b>baki</b> (change) at the same time and taps notes and coins, then <b>BAGI BAKI</b>.</li>
+      <li>Right baki scores 100 for the fastest, then 75, 60... Fewest pieces gets +10. Wrong = 0. 10 customers, harder each time.</li></ul>
       <h3>TARIK TEH · 1–6 players</h3>
       <ul><li>Take turns. <b>Hold</b> on the mugs to pour — your arm pulls higher and higher. Higher = more <b>buih</b>, but the stream swings more.</li>
       <li><b>Slide</b> left/right to keep the bottom mug under the teh. Spill too much and it's <b>tumpah</b> (0 buih). Let go any time to keep your buih. 3 rounds, most buih wins.</li></ul>
@@ -1530,6 +1609,18 @@
           <li>30 seconds, then tap <b>HANTAR ORDER</b>.</li>
           <li>+10 for each right item, −5 for each wrong one, +20 for a perfect table.</li>
           <li>5 tables each, from 1 customer up to 4. From table 3, someone may shout <b>"tambah satu..."</b>. At table 5 someone also <b>tukar</b> (changes) their order!</li>
+        </ul>
+        <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
+      return;
+    }
+    if (G && G.state && G.state.game === 'duit') {
+      showOverlay(`<div class="modal"><h2>KIRA DUIT · CARA MAIN</h2>
+        <ul>
+          <li>A customer comes to the <b>BAYAR SINI</b> counter. The receipt shows what they ate, the <b>JUMLAH</b> and what they <b>BAYAR</b>.</li>
+          <li>Everyone works out the <b>baki</b> (change) at the same time. Tap the notes and coins to put them in your tray. Tap a piece in the tray to take it back.</li>
+          <li>Press <b>BAGI BAKI!</b> when it's right. You only get one try per customer!</li>
+          <li>Right baki: <b>100</b> pts for the fastest, then 75, 60, 50... Use the <b>fewest pieces</b> for +10. Wrong or too slow = 0.</li>
+          <li><b>10 customers</b>, more items each time. Later customers pay with extra coins so the baki comes out neat — watch out!</li>
         </ul>
         <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
       return;
@@ -1654,7 +1745,7 @@
     if (!G || !G.code) return;
     AU.play('click');
     const url = location.origin + location.pathname + '?room=' + G.code;
-    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order', egg: 'Cari Telur', tarik: 'Tarik Teh' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
+    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order', egg: 'Cari Telur', tarik: 'Tarik Teh', duit: 'Kira Duit' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
     if (navigator.share) { navigator.share({ title: 'Kopitiam 21', text, url }).catch(() => {}); return; }
     const done = () => toast('Link copied! Paste to your friends');
     if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(done, () => toast('Code: ' + G.code));
@@ -1677,6 +1768,7 @@
   PV.mount($('#pongCanvas'), { onThrow: (p, a) => send({ t: 'throw', p, a }) });
   KV.mount($('#kopiCanvas'), { onLevel: m => send(m) });
   TV.mount($('#tarikCanvas'), { onFrame: m => send(m) });
+  DV.mount($('#duitView'), { onGive: m => send(m) });
   TV.onLocal = L => {
     const m = $('#tarikMsg'); if (!m) return;
     const html = L.done ? (L.sp >= TARIK.P.TUMPAH ? '<b>TUMPAH!</b> Aiyo...' : '<b>' + Math.round(L.fr) + ' buih!</b>') : L.miss ? '<b>Kejar!</b> Catch the teh!' : L.h > 0.75 ? '<b>GILA tinggi!</b> Lepas bila-bila...' : '<b>Tarik!</b> Hold &amp; slide...';

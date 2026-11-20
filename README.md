@@ -1,6 +1,6 @@
-# Kopitiam 21 · 6 kopitiam games
+# Kopitiam 21 · 7 kopitiam games
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with six games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur** and **Tarik Teh**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with seven games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh** and **Kira Duit**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -67,6 +67,15 @@ Pick **TARIK TEH** on the first screen before tapping BUKA MEJA. You can also pl
 - Teh that misses fills the TUMPAH bar. If it fills up, that pull scores 0. Let go any time to keep your buih.
 - Pour the whole mug with almost no spill for a SEMPURNA bonus of 25. The most buih after 3 rounds wins.
 
+## Kira Duit (1–6 players)
+
+Pick **KIRA DUIT** on the first screen before tapping BUKA MEJA. You can also play alone.
+
+- A customer comes to the BAYAR SINI counter. The receipt shows what they ate, the total and what they paid with.
+- Everyone works out the baki (change) at the same time. Tap notes and coins to put them in your tray, then press BAGI BAKI. One try per customer.
+- A right baki scores 100 for the fastest, then 75, 60, 50 and so on. Using the fewest pieces adds 10. A wrong baki or no answer scores 0.
+- 10 customers, with more items each time. Later customers sometimes pay with extra coins so the baki comes out neat.
+
 ## Uncle Jack 21 (secret game)
 
 Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it.
@@ -102,6 +111,8 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/orderview.js` | Ingat Order customers, speech bubbles, tablet and food/drink icons. |
 | `js/egg.js` | Cari Telur levels, shuffle scripts and scoring. Runs on the host. |
 | `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
+| `js/duit.js` | Kira Duit customers, prices, change checking and scoring. Runs on the host. |
+| `js/duitview.js` | Kira Duit counter, receipt, pixel money and cash drawer. |
 | `js/tarik.js` | Tarik Teh turns, pour physics, bots and scoring. Runs on the host. |
 | `js/tarikview.js` | Tarik Teh mugs, swaying stream, height ruler and your own pull. |
 | `js/net.js` | Room codes and connections through the relay (MQTT). |
