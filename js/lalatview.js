@@ -14,6 +14,7 @@
   const pops = [];                      // "+10" texts
   let markKey = '', cool = 0, stun = 0;
   let lastBuzz = 0;
+  const mine = {};                      // flies I swatted, shown dead right away before the host confirms
 
   const hostNow = () => Date.now() + (offs || 0);
   function syncClock(s) {
@@ -158,7 +159,7 @@
     const t = now / 1000, V = view();
     const ht = hostNow() - (st.t0 || 0);
     const key = st.round + ':' + st.rnd;
-    if (key !== markKey) { markKey = key; marks.length = 0; }
+    if (key !== markKey) { markKey = key; marks.length = 0; for (const k in mine) delete mine[k]; }
     cx.clearRect(0, 0, W, H);
     drawMarble();
     cx.drawImage(marble, geo.ox - 4, geo.oy - 4);
@@ -188,7 +189,7 @@
     if (st.phase === 'play') {
       let near = 0;
       for (const f of V.flies) {
-        if (st.dead && st.dead[f.id]) continue;
+        if ((st.dead && st.dead[f.id]) || mine[f.id]) continue;
         const p = LALAT.flyPos(f, ht); if (!p) continue;
         drawFly(f, p, t);
         if (!p.landed) near++;
@@ -209,6 +210,7 @@
     for (let i = pops.length - 1; i >= 0; i--) {
       const p = pops[i], age = now - p.at;
       if (age > 1100) { pops.splice(i, 1); continue; }
+      if (age < 0) continue;
       const [x, y] = toS(p.x, p.y), sc = geo.k > 150 ? 2 : 1;
       const tx = Math.round(x - root.Scene.tw(p.text, sc) / 2), ty = Math.round(y - 10 - age / 1100 * 14);
       root.Scene.ptext(cx, p.text, tx + 1, ty + 1, '#2a1a12', sc);
@@ -243,6 +245,13 @@
     AU.play('whoosh');
     cool = now + (hit.tgt === 'fly' ? 150 : hit.tgt === 'cat' ? 1000 : 400);
     if (hit.tgt === 'cat') stun = now + 1000;
+    if (hit.tgt === 'fly') {
+      // show the kill at once; the host confirms the points a moment later
+      mine[hit.fid] = now;
+      marks.push({ kind: 'splat', x, y, at: now, col: colOf(meId) });
+      pops.push({ x, y, text: 'PAP!', col: colOf(meId), at: now });
+      AU.play('crack'); navigator.vibrate && navigator.vibrate(20);
+    }
     onSwat && onSwat({ t: 'swat', x: +x.toFixed(3), y: +y.toFixed(3), tgt: hit.tgt, fid: hit.fid, id: hit.id });
   }
 
@@ -261,14 +270,20 @@
   LV.fx = function (f) {
     const now = performance.now();
     if (f.type === 'kill') {
+      const shown = f.pid === meId && mine[f.fid];
       if (f.pid !== meId) slaps.push({ x: f.x, y: f.y, col: colOf(f.pid), at: now });
-      marks.push({ kind: 'splat', x: f.x, y: f.y, at: now, col: colOf(f.pid), gold: f.k === 'gold' });
-      pops.push({ x: f.x, y: f.y, text: '+' + f.pts, col: f.k === 'gold' ? '#f6c744' : colOf(f.pid), at: now });
-      AU.play(f.k === 'gold' ? 'tada' : f.pid === meId ? 'crack' : 'chip');
+      if (!shown) marks.push({ kind: 'splat', x: f.x, y: f.y, at: now, col: colOf(f.pid), gold: f.k === 'gold' });
+      if (mine[f.fid] && f.pid !== meId) pops.push({ x: f.x, y: f.y + 0.05, text: 'LAMBAT!', col: '#9a8a78', at: now });
+      pops.push({ x: f.x, y: f.y, text: '+' + f.pts, col: f.k === 'gold' ? '#f6c744' : colOf(f.pid), at: now + (shown ? 120 : 0) });
+      if (f.k === 'gold') AU.play('tada'); else if (f.pid === meId) AU.play('coin'); else AU.play('chip');
       if (st && st.dead) st.dead[f.fid] = f.pid;
     } else if (f.type === 'slap') {
       if (f.pid !== meId) slaps.push({ x: f.x, y: f.y, col: colOf(f.pid), at: now });
-      if (f.pid === meId && f.late) pops.push({ x: f.x, y: f.y, text: 'LAMBAT!', col: '#9a8a78', at: now });
+      if (f.pid === meId && f.fid && mine[f.fid]) {
+        // host said no: someone was faster, or it had already flown off
+        delete mine[f.fid];
+        pops.push({ x: f.x, y: f.y, text: f.late ? 'LAMBAT!' : 'TERLEPAS!', col: '#9a8a78', at: now });
+      }
     } else if (f.type === 'oops') {
       if (f.pid !== meId) slaps.push({ x: f.x, y: f.y, col: colOf(f.pid), at: now });
       pops.push({ x: f.x, y: f.y, text: String(f.pts), col: '#ff6b5b', at: now });
@@ -280,6 +295,13 @@
         marks.push({ kind: 'crack', x: f.x, y: f.y, at: now, path, spill: sp, spillCol: 'rgba(138,90,52,.7)' });
       }
     }
+  };
+  // a landed fly that still has a moment left, in page coords (automated tests)
+  LV.debugTarget = function () {
+    const V = view(); if (!V || st.phase !== 'play') return null;
+    const ht = hostNow() - st.t0;
+    for (const f of V.flies) { if ((st.dead && st.dead[f.id]) || mine[f.id]) continue; const p = LALAT.flyPos(f, ht); if (p && p.landed && p.leg.t1 - ht > 200) return LV.toClient(p.x, p.y); }
+    return null;
   };
   // table coords -> page coords (used by the automated tests)
   LV.toClient = function (x, y) { if (!geo) return null; const r = cv.getBoundingClientRect(), [px, py] = toS(x, y); return { x: r.left + (px + 0.5) * S, y: r.top + (py + 0.5) * S }; };

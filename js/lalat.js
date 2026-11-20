@@ -269,7 +269,7 @@
             return;
           }
         }
-        this.fx({ type: 'slap', pid, x, y, late: !!(f && S.dead[f.id]) });
+        this.fx({ type: 'slap', pid, x, y, fid: m.fid, late: !!(f && S.dead[f.id]) });
         return;
       }
       const real = hitTest(S, x, y, t, 0.01);
