@@ -1,6 +1,6 @@
-# Kopitiam 21 · 11 kopitiam games
+# Kopitiam 21 · 10 kopitiam games
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with eleven games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit**, **Lalat Hunt**, **Mamak Mahjong**, **Roti Flip** and **Ais Kacang Tower**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with ten games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit**, **Lalat Hunt**, **Mamak Mahjong** and **Roti Flip**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -108,16 +108,6 @@ Pick **ROTI FLIP** on the first screen before tapping BUKA MEJA. You can also pl
 - 10 or more flips is a Roti Tisu, worth 20 extra. Round 3 is Roti Telur and every score counts double. Most points after 3 rounds wins.
 - On a computer, Space flips and Enter is LETAK.
 
-## Ais Kacang Tower (1–6 players)
-
-Pick **AIS KACANG** on the first screen before tapping BUKA MEJA. You can also play alone.
-
-- Players take turns adding a topping to a bowl of shaved ice: kacang merah, jagung, cendol, jelly, atap chee and aiskrim.
-- The topping swings left and right above the tower. Tap the tower or press JATUHKAN to drop it. You have 10 seconds.
-- Drop it off the edge, or stack so far to one side that the tower leans over, and it falls (runtuh). That player is out.
-- The tower wobbles more as it leans. The swing gets faster and the toppings get smaller as it grows.
-- After each fall a new bowl starts with the players left. The last one standing wins. Alone, you build as high as you can.
-
 ## Uncle Jack 21 (secret game)
 
 Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it (this also unlocks Mamak Mahjong).
@@ -153,8 +143,6 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/orderview.js` | Ingat Order customers, speech bubbles, tablet and food/drink icons. |
 | `js/egg.js` | Cari Telur levels, shuffle scripts and scoring. Runs on the host. |
 | `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
-| `js/kacang.js` | Ais Kacang Tower toppings, swing, balance check, turns and bots. Runs on the host. |
-| `js/kacangview.js` | Ais Kacang Tower bowl, tower, swinging topping and collapse. |
 | `js/roti.js` | Roti Flip timing rules, rounds, flip checks, scoring and bots. Runs on the host. |
 | `js/rotiview.js` | Roti Flip counter, dough, timing ring, tawa and your own flips. |
 | `js/mamak.js` | Mamak Mahjong tiles, turns, CHOP/MAKAN claims, scoring and bots. Runs on the host; each hand is sent only to its owner. |
