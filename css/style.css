@@ -583,3 +583,45 @@ input::placeholder { color: #7d6c50; }
   #duitView img.coin.big { width: 30px; height: 30px; }
   .d-row { font-size: 16px; }
 }
+
+/* ---------- Mamak Mahjong ---------- */
+#mamakView { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 8px 6px; gap: 6px; overflow: hidden; }
+#mamakView .oq { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.m-table { width: 100%; max-width: 620px; flex: 0 1 auto; min-height: 150px; background: #2f6b3f; box-shadow: inset 0 0 0 3px var(--ink), inset 0 0 0 7px #24553a, 0 5px 0 rgba(0,0,0,.3); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; color: #e8f4e0; }
+.m-info { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.m-info b { font-family: var(--px); font-size: 10px; color: var(--gold); }
+.m-info span { font-size: 16px; color: #bfe0c0; }
+.m-melds { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.m-meld { display: flex; align-items: center; gap: 4px; font-size: 15px; }
+.m-set { display: inline-flex; gap: 1px; margin-right: 3px; }
+.m-last { min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; }
+.m-dis { display: flex; align-items: center; gap: 10px; font-size: 18px; }
+.m-dis em { font-style: normal; font-family: var(--px); font-size: 9px; color: var(--gold); animation: pulse 1s steps(2) infinite; }
+.m-turn { font-size: 18px; } .m-turn b { font-family: var(--px); font-size: 11px; color: var(--gold); }
+.m-res { font-size: 18px; } .m-res b { color: var(--gold); }
+.m-win { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; }
+.m-pool { display: flex; flex-wrap: wrap; gap: 2px; align-content: flex-start; padding-top: 6px; border-top: 2px dashed #24553a; min-height: 32px; }
+.m-mine { width: 100%; max-width: 620px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: auto; background: #6b4226; box-shadow: inset 0 0 0 3px var(--ink), inset 0 4px 0 3px #8a5a34, 0 5px 0 rgba(0,0,0,.3); padding: 6px 6px 8px; }
+.m-myexp { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.m-row { display: flex; gap: 3px; align-items: flex-end; justify-content: center; min-height: 64px; padding-top: 10px; }
+.m-gap { width: 8px; }
+.m-wait { font-family: var(--px); font-size: 8px; color: var(--cream); display: flex; align-items: center; gap: 4px; min-height: 0; }
+.m-wait b { color: var(--red); }
+.mt { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; width: 42px; height: 56px; padding: 0; border: 0; background: #fbf8ee; box-shadow: inset 0 0 0 2px var(--ink), inset 0 -6px 0 2px #3fae6a, inset 0 -8px 0 2px #2a7a4a; padding-bottom: 6px; line-height: 0; color: var(--ink); }
+.mt img { width: 28px; height: 28px; image-rendering: pixelated; }
+.mt small { font-family: var(--px); font-size: 6px; line-height: 1; }
+.mt.live { cursor: pointer; }
+.mt.live:hover { transform: translateY(-3px); }
+.mt.sel { transform: translateY(-10px) !important; box-shadow: inset 0 0 0 2px var(--ink), inset 0 -6px 0 2px #3fae6a, inset 0 -8px 0 2px #2a7a4a, 0 0 0 3px var(--gold); }
+.mt.new { animation: hop .3s steps(2) 2; }
+.mt.big { width: 54px; height: 72px; } .mt.big img { width: 38px; height: 38px; } .mt.big small { font-size: 8px; }
+.mt.sm { width: 30px; height: 40px; padding-bottom: 4px; box-shadow: inset 0 0 0 2px var(--ink), inset 0 -4px 0 2px #3fae6a; } .mt.sm img { width: 20px; height: 20px; } .mt.sm small { font-size: 5px; }
+.mt.xs { width: 22px; height: 28px; padding-bottom: 3px; box-shadow: inset 0 0 0 1px var(--ink), inset 0 -3px 0 1px #3fae6a; } .mt.xs img { width: 16px; height: 16px; } .mt.xs small { display: none; }
+.mt.open { background: #f0e6c8; }
+.mt.hot { box-shadow: inset 0 0 0 1px var(--ink), inset 0 -3px 0 1px #3fae6a, 0 0 0 2px var(--gold); }
+#mamakView.myturn .m-mine { box-shadow: inset 0 0 0 3px var(--ink), inset 0 4px 0 3px #8a5a34, 0 0 0 3px var(--gold), 0 5px 0 rgba(0,0,0,.3); }
+@media (max-width: 640px) {
+  .mt { width: 40px; height: 54px; } .mt img { width: 26px; height: 26px; }
+  .m-row { gap: 2px; }
+}
+@media (max-width: 380px) { .mt { width: 36px; height: 50px; } .mt img { width: 24px; height: 24px; } }

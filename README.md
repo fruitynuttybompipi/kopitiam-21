@@ -1,6 +1,6 @@
-# Kopitiam 21 · 8 kopitiam games
+# Kopitiam 21 · 9 kopitiam games
 
-A pixel-art multiplayer game set in a Malaysian kopitiam, with eight games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit** and **Lalat Hunt**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
+A pixel-art multiplayer game set in a Malaysian kopitiam, with nine games: **Uncle Jack 21** (blackjack), **Telur Pong**, **Kopi Tumpah**, **Ingat Order**, **Cari Telur**, **Tarik Teh**, **Kira Duit**, **Lalat Hunt** and **Mamak Mahjong**. You play with friends in the browser, and each person uses their own phone or laptop. No sign-up and no server to run.
 
 ## Put it on GitHub Pages
 
@@ -86,6 +86,17 @@ Pick **LALAT HUNT** on the first screen before tapping BUKA MEJA. You can also p
 - Missing and hitting a plate or cup is −15. Swatting empty table makes you wait a moment.
 - 3 rounds of 30 seconds. Round 2 has more flies and new plates; round 3 is a swarm.
 
+## Mamak Mahjong (2–4 players)
+
+Pick **MAMAK MAHJONG** on the first screen before tapping BUKA MEJA. You need at least 2 players; bots count.
+
+- 12 kinds of kopitiam tiles, 4 of each. Everyone holds 7 tiles, and only you can see yours.
+- On your turn you draw a tile automatically, then throw one away (buang): tap a tile, then tap it again or press BUANG.
+- Win with 8 tiles that make 2 sets of three-of-a-kind plus 1 pair. Press MAKAN!
+- When someone throws a tile you have a pair of, you can CHOP it to make an open set, then throw one. If the thrown tile finishes your hand, press MAKAN to win with it.
+- Points: win +10, winning on your own draw +5, winning with no CHOP sets +5. Whoever threw your winning tile loses 5.
+- TUNGGU under your tiles shows the tile you are waiting for. If the wall runs out, the hand is a draw. 4 hands per game.
+
 ## Uncle Jack 21 (secret game)
 
 Uncle Jack 21 is hidden from the first screen. Tap the **KOPITIAM 21** signboard 9 times quickly to unlock it.
@@ -121,6 +132,8 @@ Open `index.html?offline&autohost&bots=4&autostart` for Uncle Jack 21 against 4 
 | `js/orderview.js` | Ingat Order customers, speech bubbles, tablet and food/drink icons. |
 | `js/egg.js` | Cari Telur levels, shuffle scripts and scoring. Runs on the host. |
 | `js/eggview.js` | Cari Telur bowls, egg and shuffle animation. |
+| `js/mamak.js` | Mamak Mahjong tiles, turns, CHOP/MAKAN claims, scoring and bots. Runs on the host; each hand is sent only to its owner. |
+| `js/mamakview.js` | Mamak Mahjong table, discard pool, open sets and your tile rack. |
 | `js/lalat.js` | Lalat Hunt fly paths, table layout, swat checking and scoring. Runs on the host. |
 | `js/lalatview.js` | Lalat Hunt table, flies, selipar and splats. |
 | `js/duit.js` | Kira Duit customers, prices, change checking and scoring. Runs on the host. |

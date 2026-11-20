@@ -43,7 +43,7 @@
   { k: '#2a1a12', w: '#fbfbf4', d: '#c0392b', S: '#d8d0bc' });
   document.documentElement.style.setProperty('--back', `url(${gridURL(['gGGg', 'GggG', 'GggG', 'gGGg'], { g: '#2f8a5f', G: '#1f5a43' })}) 0 0 / 8px 8px repeat #2f8a5f`);
 
-  const VERSION = 'v26';
+  const VERSION = 'v27';
   const CUP_ICON = gridURL(['kkkkkkk', 'kdddddk', 'kwwwwwk', 'kgggggk', 'kwwwwwk', '.kkkkk.'], { k: '#2a1a12', d: '#5a3418', w: '#f6f2e6', g: '#3fae6a' });
   const EGG_ICON = gridURL(['..kkk..', '.kwwwk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', 'kwwwwSk', '.kSSSk.', '..kkk..'], { k: '#2a1a12', w: '#fff8ea', S: '#e8dcc0' });
   const EMOTES = ['Huat ah!', 'Alamak!', 'Steady bom!', 'Cepat lah!', 'Wah lau eh', 'Tapau!', 'Cincai lah', 'Sien...', 'Ong ah!', 'Hehe...'];
@@ -197,7 +197,7 @@
 
   function startHost() {
     newSession('host');
-    const Engine = { pong: PONG.Table, kopi: KOPI.Table, order: ORDER.Table, egg: EGG.Table, tarik: TARIK.Table, duit: DUIT.Table, lalat: LALAT.Table }[me.mode] || BJ.Table;
+    const Engine = { pong: PONG.Table, kopi: KOPI.Table, order: ORDER.Table, egg: EGG.Table, tarik: TARIK.Table, duit: DUIT.Table, lalat: LALAT.Table, mamak: MAMAK.Table }[me.mode] || BJ.Table;
     const table = new Engine({
       hostId: me.id,
       onChange: flush,
@@ -228,6 +228,7 @@
       },
       onHello: m => {
         if (!m.pid || m.pid === me.id) return { ok: false, reason: 'Invalid player' };
+        if (G.privSent) delete G.privSent[String(m.pid).slice(0, 24)];
         return table.addPlayer({ id: String(m.pid).slice(0, 24), name: m.name, avatar: m.avatar, drink: m.drink });
       },
       onJoined: () => {},
@@ -248,6 +249,18 @@
       const s = G.table.publicState();
       const fx = G.fxq.splice(0);
       if (G.net) { G.net.broadcast({ t: 'state', s }); for (const f of fx) G.net.broadcast({ t: 'fx', fx: f }); }
+      // games with hidden hands: each player gets their own part, only when it changes
+      if (G.table.privateFor) {
+        G.privSent = G.privSent || {};
+        for (const p of s.players) {
+          if (p.isBot) continue;
+          const pv = G.table.privateFor(p.id), js = JSON.stringify(pv);
+          if (G.privSent[p.id] === js) continue;
+          G.privSent[p.id] = js;
+          if (p.id === me.id) G.priv = pv;
+          else if (G.net) G.net.send(p.id, { t: 'priv', s: pv });
+        }
+      }
       onState(s);
       for (const f of fx) onFx(f);
     });
@@ -264,6 +277,7 @@
       onMsg: m => {
         if (!m || !G) return;
         if (m.t === 'state') onState(m.s);
+        else if (m.t === 'priv') { G.priv = m.s; if (G.state) onState(G.state); }
         else if (m.t === 'fx') onFx(m.fx);
         else if (m.t === 'reject') { leaveGame(true); alertBox('Tak boleh masuk', esc(m.reason)); }
         else if (m.t === 'kicked') { leaveGame(true); alertBox('Kena kick!', 'The host removed you from the table.'); }
@@ -363,6 +377,20 @@
       $('#game').classList.toggle('myturn', s.phase === 'answer' && s.cur === me.id);
       $('#game').classList.toggle('hide-emote', s.phase === 'answer' && s.cur === me.id);
       if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showOrderResult, 1600);
+      firstRender = false;
+      return;
+    }
+    if (s.game === 'mamak') {
+      $('#btnHost').classList.add('hidden');
+      setView('mamak');
+      const pv = G.priv && G.priv.key === s.round + ':' + s.hand ? G.priv : (s.phase === 'lobby' || s.phase === 'over' ? null : G.priv);
+      MV.render(s, pv, me.id);
+      renderTarikHud(s, '#mamakView .oq');
+      renderTimer(s, meP);
+      renderMamakControls(s, meP, pv);
+      renderTicker(s);
+      $('#game').classList.toggle('myturn', (s.phase === 'turn' && s.cur === me.id) || !!(s.phase === 'claim' && pv && pv.claim));
+      if (s.phase === 'over' && prev && prev.phase !== 'over') setTimeout(showMamakResult, 1600);
       firstRender = false;
       return;
     }
@@ -686,6 +714,13 @@
       bar.classList.add('on');
       return;
     }
+    if (s.game === 'mamak') {
+      const mine = (t.kind === 'turn' && s.cur === me.id) || (t.kind === 'claim' && G.priv && G.priv.claim);
+      setText($('#timerLbl'), t.kind === 'turn' ? (s.cur === me.id ? 'GILIRAN KAU!' : nameOf(s.cur).toUpperCase() + '...') : t.kind === 'claim' ? 'CHOP? MAKAN?' : 'NEXT HAND');
+      G.timer.mine = !!mine;
+      bar.classList.add('on');
+      return;
+    }
     if (s.game === 'lalat') {
       setText($('#timerLbl'), t.kind === 'play' ? 'PAP LALAT!' : t.kind === 'ready' ? 'SIAP...' : 'REHAT');
       G.timer.mine = t.kind === 'play';
@@ -886,7 +921,13 @@
       case 'addBot': AU.play('pop'); send({ t: 'addBot' }); return;
       case 'hostMenu': showHostMenu(); return;
       case 'newGame': send({ t: 'newGame' }); closeOverlay(); return;
-      case 'results': if (G.state && G.state.game === 'lalat') showLalatResult(); else if (G.state && G.state.game === 'duit') showDuitResult(); else if (G.state && G.state.game === 'tarik') showTarikResult(); else if (G.state && G.state.game === 'order') showOrderResult(); else if (G.state && G.state.game === 'egg') showEggResult(); else showPodium(); return;
+      case 'mjDiscard': MV.discardSel(); return;
+      case 'mjWin': send({ t: 'selfwin' }); return;
+      case 'mjChop': send({ t: 'claim', what: 'chop' }); return;
+      case 'mjMakan': send({ t: 'claim', what: 'makan' }); return;
+      case 'mjPass': send({ t: 'claim', what: 'pass' }); return;
+      case 'mjNext': send({ t: 'next' }); return;
+      case 'results': if (G.state && G.state.game === 'mamak') showMamakResult(); else if (G.state && G.state.game === 'lalat') showLalatResult(); else if (G.state && G.state.game === 'duit') showDuitResult(); else if (G.state && G.state.game === 'tarik') showTarikResult(); else if (G.state && G.state.game === 'order') showOrderResult(); else if (G.state && G.state.game === 'egg') showEggResult(); else showPodium(); return;
       case 'submitOrder': AU.play('chip'); send({ t: 'chit', items: OV.chitNow() }); send({ t: 'submit' }); return;
       case 'menu': confirmLeave(); return;
     }
@@ -896,6 +937,7 @@
   function targetFor(pid) {
     if (!G || !G.state) return null;
     if (G.state.game === 'pong') return $$('#pongView .ph-card').find(c => c.dataset.pid === pid) || null;
+    if (G.state.game === 'mamak') return $$('#mamakView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'lalat') return $$('#lalatView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'duit') return $$('#duitView .kp-card').find(c => c.dataset.pid === pid) || null;
     if (G.state.game === 'tarik') return $$('#tarikView .kp-card').find(c => c.dataset.pid === pid) || null;
@@ -914,6 +956,7 @@
     if (G.state && G.state.game === 'tarik') { tarikFx(f); return; }
     if (G.state && G.state.game === 'duit') { duitFx(f); return; }
     if (G.state && G.state.game === 'lalat') { lalatFx(f); return; }
+    if (G.state && G.state.game === 'mamak') { mamakFx(f); return; }
     if (G.state && G.state.game === 'order') { orderFx(f); return; }
     if (G.state && G.state.game === 'egg') { eggFx(f); return; }
     switch (f.type) {
@@ -1116,6 +1159,9 @@
     $('#tarikView').classList.toggle('hidden', v !== 'tarik');
     $('#duitView').classList.toggle('hidden', v !== 'duit');
     $('#lalatView').classList.toggle('hidden', v !== 'lalat');
+    $('#mamakView').classList.toggle('hidden', v !== 'mamak');
+    if (v !== 'mamak' && MV.active) { MV.active = false; MV.reset(); }
+    if (v === 'mamak') MV.active = true;
     if (LV.visible !== (v === 'lalat')) { LV.visible = v === 'lalat'; LV.show(LV.visible); }
     if (v !== 'duit' && DV.active) { DV.active = false; DV.reset(); }
     if (v === 'duit') DV.active = true;
@@ -1356,6 +1402,66 @@
     confetti();
   }
 
+  // =============== MAMAK MAHJONG ===============
+  function renderMamakControls(s, meP, pv) {
+    const box = $('#controls');
+    const host = s.hostId === me.id, n = s.players.length, ph = s.phase;
+    const mine = ph === 'turn' && s.cur === me.id;
+    const cl = ph === 'claim' && pv && pv.claim;
+    const key = ['mamak', ph, s.cur, s.hand, n, host, s.winner, mine && pv && pv.canWin, cl ? JSON.stringify(pv.claim) : '', (G.relays || []).join()].join('|');
+    let html = '';
+    const hd = `Hand <b>${Math.max(1, Math.min(s.hand, s.hands))}/${s.hands}</b>`;
+    if (ph === 'lobby') {
+      html = host
+        ? `<div class="ctl-info">Mamak Mahjong · Players <b>${n}/${MAMAK.MAX}</b></div>
+           <div class="ctl-row">${n < MAMAK.MAX ? '<button class="btn fixed" data-act="addBot">+ BOT</button>' : ''}
+           <button class="btn red big" data-act="start"${n < MAMAK.MIN ? ' disabled' : ''}>START!<small>${n < MAMAK.MIN ? 'Need 2+ (add a bot)' : 'Kocok tile'}</small></button></div>
+           <div class="ctl-hint">${n < MAMAK.MAX ? 'Share code ' + esc(s.code || '') + ' · ' : ''}${G.relays && G.relays.length ? 'Online via ' + esc(G.relays.join(' · ')) : OFFLINE ? 'Offline test' : 'Going online...'} · ${VERSION}</div>`
+        : `<div class="ctl-info">Mamak Mahjong · waiting for host to <b>START</b></div><div class="ctl-hint">2 sets of three + 1 pair = MAKAN!</div>`;
+    } else if (ph === 'over') {
+      const w = s.players.find(p => p.id === s.winner);
+      html = `<div class="ctl-info"><b>${esc(w ? w.name : '?')}</b> Raja Mamak!</div>
+        <div class="ctl-row"><button class="btn big" data-act="results">RESULTS</button>${host ? '<button class="btn red big" data-act="newGame">MAIN LAGI<small>Restart</small></button>' : ''}<button class="btn big" data-act="menu">MAIN MENU<small>${host ? 'Close table' : 'Leave table'}</small></button></div>`;
+    } else if (mine) {
+      html = `<div class="ctl-info">${hd} · <b>Giliran kau!</b> ${pv && pv.canWin ? 'Tiles cukup — MAKAN!' : 'Pilih satu tile untuk buang'}</div>
+        <div class="ctl-row">${pv && pv.canWin ? '<button class="btn green big" data-act="mjWin">MAKAN!<small>Menang hand ni</small></button>' : ''}<button class="btn red big" data-act="mjDiscard">BUANG<small>Tap tile, then here</small></button></div>`;
+    } else if (cl) {
+      const last = s.last;
+      html = `<div class="ctl-info"><b>${esc(nameOf(last.by))}</b> buang ${MAMAK.KINDS[last.k].label} — nak ambil?</div>
+        <div class="ctl-row">${pv.claim.makan ? '<button class="btn green big" data-act="mjMakan">MAKAN!<small>Menang dengan tile ni</small></button>' : ''}${pv.claim.chop ? '<button class="btn red big" data-act="mjChop">CHOP!<small>Buat set terbuka</small></button>' : ''}<button class="btn big" data-act="mjPass">LEPAS<small>Tak nak</small></button></div>`;
+    } else if (ph === 'claim') {
+      html = `<div class="ctl-info">${hd} · tunggu orang lain decide...</div>`;
+    } else if (ph === 'result') {
+      html = `<div class="ctl-info">${hd} habis!</div>${host ? '<div class="ctl-row"><button class="btn big" data-act="mjNext">NEXT HAND</button></div>' : '<div class="ctl-hint">Next hand starting...</div>'}`;
+    } else {
+      html = `<div class="ctl-info">${hd} · ${ph === 'deal' ? 'Kocok tile...' : '<b>' + esc(nameOf(s.cur)) + '</b> punya giliran'}</div><div class="ctl-hint">${meP && !s.seats.includes(me.id) ? 'You join next game — tengok je' : '2 sets of three + 1 pair = MAKAN!'}</div>`;
+    }
+    setCtl(box, key, html);
+  }
+
+  function mamakFx(f) {
+    MV.fx(f);
+    switch (f.type) {
+      case 'say': bubble(f.pid, f.text, f.mood); break;
+      case 'emote': bubble(f.pid, f.text, 'emote'); AU.play('pop'); break;
+      case 'banner': showBanner(f.text, f.style); break;
+      case 'draw': if (f.pid === me.id) vibrate(30); break;
+      case 'makan': confetti(); mood(avatarOf(f.pid), 'happy'); if (f.from) mood(avatarOf(f.from), 'sad'); break;
+      case 'gameover': confetti(); AU.play(f.winner === me.id ? 'tada' : 'win'); break;
+    }
+  }
+
+  function showMamakResult() {
+    const s = G && G.state; if (!s || s.phase !== 'over' || !s.ranking) return;
+    const r = s.ranking;
+    const pd = (p, i) => p ? `<div class="pd p${i + 1}"><div class="av" style="background-image:url(${SPR.avatarSheet(p.avatar)})"></div><div class="nm">${esc(p.name)}</div><div class="ch">${p.score} pts</div><div class="blk">${i + 1}</div></div>` : '';
+    showOverlay(`<div class="modal"><h2>RAJA MAMAK · ${esc(r[0] ? r[0].name : '')}!</h2>
+      <div class="podium">${pd(r[1], 1)}${pd(r[0], 0)}${pd(r[2], 2)}</div>
+      ${r.map((p, i) => `<p>${i + 1}. ${esc(p.name)} — <b>${p.score}</b> pts</p>`).join('')}
+      <div class="row">${G.isHost ? '<button class="btn red" data-h="newGame">MAIN LAGI</button>' : ''}<button class="btn" data-h="menu">MAIN MENU</button><button class="btn" data-h="close">CLOSE</button></div></div>`, 'podium');
+    confetti();
+  }
+
   // =============== LALAT HUNT ===============
   function renderLalatControls(s, meP) {
     const box = $('#controls');
@@ -1473,6 +1579,14 @@
       setText($('.nm', c), p.name);
       const turn = s.game === 'duit' ? !!(s.phase === 'count' && s.gave && s.gave[id]) : (s.phase === 'tarik' || s.phase === 'result') && s.turn && s.turn.pid === id;
       if (s.game === 'lalat') $('small', c).style.color = p.col;
+      if (s.game === 'mamak') {
+        const sub = s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : !s.seats.includes(id) ? 'NEXT' : !p.connected ? 'AUTO' : s.phase === 'turn' && s.cur === id ? 'MAIN!' : p.score + ' PTS';
+        setText($('small', c), sub);
+        c.classList.toggle('turn', s.phase === 'turn' && s.cur === id);
+        c.classList.toggle('out', false);
+        c.classList.toggle('me', id === me.id);
+        return;
+      }
       const sub = s.game === 'lalat' ? (s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : 'READY') : !p.inGame ? 'NEXT' : !p.connected ? 'OFF' : p.score + ' PTS')
         : s.game === 'duit'
         ? (s.phase === 'lobby' ? (p.wins ? p.wins + ' WIN' : '') : !p.inGame ? 'NEXT' : !p.connected ? 'OFF' : s.phase === 'count' ? (s.gave && s.gave[id] ? 'DAH BAGI' : 'KIRA...') : p.score + ' PTS')
@@ -1653,6 +1767,9 @@
       <h3>CARI TELUR · 1–6 players</h3>
       <ul><li>Follow the egg under the shuffling bowls, then everyone taps a bowl at the same time.</li>
       <li>10 levels, 3 up to 6 bowls. 100 points per egg found, plus a bonus for picking fast.</li></ul>
+      <h3>MAMAK MAHJONG · 2–4 players</h3>
+      <ul><li>Hold 7 kopitiam tiles. Each turn you draw one, then <b>buang</b> one. Win with <b>2 sets of three-of-a-kind + 1 pair</b> — MAKAN!</li>
+      <li>When someone buang a tile you have a pair of, <b>CHOP</b> it for an open set. If it finishes your hand, <b>MAKAN</b> it. 4 hands, most points wins.</li></ul>
       <h3>LALAT HUNT · 1–6 players</h3>
       <ul><li>Flies buzz over the table. <b>Tap a fly</b> — flying or landed — to swat it with your selipar. First hit wins it.</li>
       <li>Lalat +10, green langau +25, gold +50. Hit a plate or cup −15. 3 rounds of 30 s.</li></ul>
@@ -1690,6 +1807,20 @@
           <li>30 seconds, then tap <b>HANTAR ORDER</b>.</li>
           <li>+10 for each right item, −5 for each wrong one, +20 for a perfect table.</li>
           <li>5 tables each, from 1 customer up to 4. From table 3, someone may shout <b>"tambah satu..."</b>. At table 5 someone also <b>tukar</b> (changes) their order!</li>
+        </ul>
+        <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
+      return;
+    }
+    if (G && G.state && G.state.game === 'mamak') {
+      showOverlay(`<div class="modal"><h2>MAMAK MAHJONG · CARA MAIN</h2>
+        <ul>
+          <li>12 kinds of kopitiam tiles, 4 of each. Everyone holds <b>7 tiles</b> — only you can see yours.</li>
+          <li>On your turn you <b>draw</b> one tile automatically, then tap a tile and tap it again (or press <b>BUANG</b>) to throw one away.</li>
+          <li>Win with <b>8 tiles = 2 sets of three-of-a-kind + 1 pair</b>, e.g. KOPI KOPI KOPI · ROTI ROTI ROTI · TEH TEH. Press <b>MAKAN!</b></li>
+          <li>When someone buang a tile and you hold a pair of it, you can <b>CHOP!</b> — take it to make an open set (everyone sees it), then buang one.</li>
+          <li>If the thrown tile <b>finishes your hand</b>, press <b>MAKAN!</b> to win with it.</li>
+          <li><b>Points:</b> win +10 · makan sendiri (own draw) +5 · no CHOP sets (tutup) +5 · the one who threw your winning tile −5.</li>
+          <li><b>TUNGGU</b> under your tiles shows which tile you're waiting for. Tembok (wall) runs out = seri. <b>4 hands</b>, most points is Raja Mamak.</li>
         </ul>
         <div class="row"><button class="btn green" data-h="close">FAHAM!</button></div></div>`, 'help');
       return;
@@ -1839,7 +1970,7 @@
     if (!G || !G.code) return;
     AU.play('click');
     const url = location.origin + location.pathname + '?room=' + G.code;
-    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order', egg: 'Cari Telur', tarik: 'Tarik Teh', duit: 'Kira Duit', lalat: 'Lalat Hunt' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
+    const text = 'Jom main ' + ({ pong: 'Telur Pong', kopi: 'Kopi Tumpah', order: 'Ingat Order', egg: 'Cari Telur', tarik: 'Tarik Teh', duit: 'Kira Duit', lalat: 'Lalat Hunt', mamak: 'Mamak Mahjong' }[G.state && G.state.game] || 'Uncle Jack 21') + ' kat Kopitiam 21! Meja ' + G.code;
     if (navigator.share) { navigator.share({ title: 'Kopitiam 21', text, url }).catch(() => {}); return; }
     const done = () => toast('Link copied! Paste to your friends');
     if (navigator.clipboard) navigator.clipboard.writeText(text + ' ' + url).then(done, () => toast('Code: ' + G.code));
@@ -1864,6 +1995,7 @@
   TV.mount($('#tarikCanvas'), { onFrame: m => send(m) });
   DV.mount($('#duitView'), { onGive: m => send(m) });
   LV.mount($('#lalatCanvas'), { onSwat: m => send(m) });
+  MV.mount($('#mamakView'), { onAct: m => send(m) });
   TV.onLocal = L => {
     const m = $('#tarikMsg'); if (!m) return;
     const html = L.done ? (L.sp >= TARIK.P.TUMPAH ? '<b>TUMPAH!</b> Aiyo...' : '<b>' + Math.round(L.fr) + ' buih!</b>') : L.miss ? '<b>Kejar!</b> Catch the teh!' : L.h > 0.75 ? '<b>GILA tinggi!</b> Lepas bila-bila...' : '<b>Tarik!</b> Hold &amp; slide...';
